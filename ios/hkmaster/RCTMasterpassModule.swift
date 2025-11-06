@@ -546,7 +546,82 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Remove Card
   
   @objc func removeCard(_ jToken: String, accountKey: String?, cardAlias: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Remove Card - Not implemented yet"])
+    // Call SDK removeCard method with completion handler
+    // iOS SDK signature: removeCard(_:accountKey:cardAlias:_:)
+    MasterPass.removeCard(
+      jToken,
+      accountKey ?? "",
+      cardAlias ?? "",
+      { (error: ServiceError?, result: MPResponse<RemoveCardResponse>?) in
+        if let error = error {
+          // Handle error
+          var errorMessage = error.responseDesc ?? "Remove Card failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
+            errorMessage += " [MD Status: \(mdStatus)]"
+          }
+          if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
+            errorMessage += " [MD Error: \(mdErrorMsg)]"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          // Handle success response
+          var responseDict: [String: Any] = [:]
+          
+          // MPResponse fields - buildId, statusCode, message are non-optional
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          
+          // Optional fields
+          if let version = response.version {
+            responseDict["version"] = version
+          } else {
+            responseDict["version"] = NSNull()
+          }
+          
+          if let correlationId = response.correlationId {
+            responseDict["correlationId"] = correlationId
+          } else {
+            responseDict["correlationId"] = NSNull()
+          }
+          
+          if let requestId = response.requestId {
+            responseDict["requestId"] = requestId
+          } else {
+            responseDict["requestId"] = NSNull()
+          }
+          
+          // Check for exception
+          if let exception = response.exception {
+            var exceptionDict: [String: Any] = [:]
+            exceptionDict["level"] = exception.level
+            exceptionDict["code"] = exception.code
+            exceptionDict["message"] = exception.message
+            responseDict["exception"] = exceptionDict
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          // Handle result - RemoveCardResponse
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            // RemoveCardResponse typically contains success confirmation
+            // Map any fields from RemoveCardResponse if available
+            resultDict["status"] = "success"
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Remove Card failed: No response received", nil)
+        }
+      }
+    )
   }
   
   // MARK: - Update User ID

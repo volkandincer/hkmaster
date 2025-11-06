@@ -183,6 +183,33 @@ export const MasterpassTestScreen: React.FC = () => {
     }
   }, []);
 
+  const handleRemoveCard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      // Generate random values for each call
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomCardAlias = `card-${generateRandomString(10)}`;
+
+      const result = await MasterpassService.removeCard(
+        randomJToken,
+        randomAccountKey,
+        randomCardAlias,
+      );
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleClear = useCallback(() => {
     setResponse(null);
     setError(null);
@@ -223,6 +250,13 @@ export const MasterpassTestScreen: React.FC = () => {
           <MasterpassButton
             title="Account Access"
             onPress={handleAccountAccess}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Remove Card"
+            onPress={handleRemoveCard}
             loading={loading}
             disabled={loading}
           />

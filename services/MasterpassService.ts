@@ -192,6 +192,38 @@ class MasterpassService {
       throw new Error(`Masterpass accountAccess failed: ${errorMessage}`);
     }
   }
+
+  /**
+   * Remove Card from Masterpass
+   */
+  async removeCard(
+    jToken: string,
+    accountKey?: string,
+    cardAlias?: string,
+  ): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      // Validate jToken
+      if (!jToken || jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      const response = await MasterpassModule.removeCard(
+        jToken,
+        accountKey || null,
+        cardAlias || null,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass removeCard failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default new MasterpassService();
