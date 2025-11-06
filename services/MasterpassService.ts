@@ -263,6 +263,43 @@ class MasterpassService {
       throw new Error(`Masterpass updateUserId failed: ${errorMessage}`);
     }
   }
+
+  /**
+   * Update User MSISDN in Masterpass
+   */
+  async updateUserMsisdn(
+    jToken: string,
+    accountKey?: string,
+    newMsisdn?: string,
+  ): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      // Validate jToken
+      if (!jToken || jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      // Validate newMsisdn
+      if (!newMsisdn || newMsisdn.trim().length === 0) {
+        throw new Error('newMsisdn is required');
+      }
+
+      const response = await MasterpassModule.updateUserMsisdn(
+        jToken,
+        accountKey || null,
+        newMsisdn,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass updateUserMsisdn failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default new MasterpassService();
