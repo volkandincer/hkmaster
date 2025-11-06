@@ -224,6 +224,45 @@ class MasterpassService {
       throw new Error(`Masterpass removeCard failed: ${errorMessage}`);
     }
   }
+
+  /**
+   * Update User ID in Masterpass
+   */
+  async updateUserId(
+    jToken: string,
+    accountKey?: string,
+    currentUserId?: string,
+    newUserId?: string,
+  ): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      // Validate jToken
+      if (!jToken || jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      // Validate newUserId
+      if (!newUserId || newUserId.trim().length === 0) {
+        throw new Error('newUserId is required');
+      }
+
+      const response = await MasterpassModule.updateUserId(
+        jToken,
+        accountKey || null,
+        currentUserId || null,
+        newUserId,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass updateUserId failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default new MasterpassService();
