@@ -149,8 +149,10 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
       val cvvMPText = MPText(activity)
       cvvMPText.setText(cvv)
       
-      // Create MPCheckBox (optional, can be null)
+      // Create MPCheckBox and set it to checked (required by SDK)
+      // SDK requires terms and conditions checkbox to be selected
       val checkBox = MPCheckBox(activity)
+      checkBox.isChecked = true
       
       // Create MPCard object - use non-null values for required fields
       val mpCard = MPCard(

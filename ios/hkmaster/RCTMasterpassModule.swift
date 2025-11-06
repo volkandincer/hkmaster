@@ -109,9 +109,10 @@ class RCTMasterpassModule: RCTEventEmitter {
     }
     
     // Convert accountKeyType to enum
+    // AccountKeyType has .id and .msisdn cases
     let accountKeyTypeEnum: AccountKeyType?
     if let accountKeyTypeStr = accountKeyType {
-      accountKeyTypeEnum = AccountKeyType(rawValue: accountKeyTypeStr)
+      accountKeyTypeEnum = AccountKeyType(rawValue: accountKeyTypeStr.lowercased())
     } else {
       accountKeyTypeEnum = nil
     }
@@ -133,37 +134,49 @@ class RCTMasterpassModule: RCTEventEmitter {
       }
     }
     
-    // TODO: iOS SDK MPCard and MPText API needs to be verified from SDK documentation
-    // iOS SDK API differs from Android - MPText may have different methods/properties
-    // For now, return error indicating SDK API needs verification
-    rejecter("ERROR", "Add Card - iOS SDK MPCard/MPText API needs verification. Please check SDK documentation for correct usage.", nil)
-  }
-  
-  // Helper method to convert SDK response to dictionary
-  private func convertResponseToDictionary(_ response: Any) -> [String: Any]? {
-    // This will be implemented based on actual SDK response structure
-    // For now, return basic structure
-    return ["response": "\(response)"]
-  }
-  
-  // MARK: - Link Account To Merchant
-  
-  @objc func linkAccountToMerchant(_ jToken: String, accountKey: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    // Call SDK linkAccountToMerchant method with completion handler
-    // Note: Method name may differ in iOS SDK - check SDK documentation
-    // For now, return not implemented
-    rejecter("ERROR", "Link Account To Merchant - iOS SDK method name needs verification", nil)
-    return
+    // Create MPText instances for card number and CVV
+    // SDK requires MPText type to be set correctly (cardNo for card number, cvv for CVV)
+    // TypeScript already validates and formats the values, so we just create MPText and set values
+    let cardNoMPText = MPText()
+    cardNoMPText.type = .cardNo
+    cardNoMPText.text = cardNumber
     
-    // TODO: Uncomment when correct method name is found
-    /*
-    MasterPass.linkAccountToMerchant(
-      jToken: jToken,
+    let cvvMPText = MPText()
+    cvvMPText.type = .cvv
+    cvvMPText.text = cvv
+    
+    // Create MPCheckboxStateProvider and set it to checked (required by SDK)
+    // SDK requires terms and conditions checkbox to be selected
+    let checkboxProvider = MPCheckboxStateProvider()
+    checkboxProvider.checkStateAction(to: true)
+    
+    // Create MPCard with correct iOS SDK signature
+    // Signature: init(_ cardNo: MPText, _ cardHolder: String?, _ cvv: MPText?, _ date: String, _ checkbox: MPCheckboxStateProvider? = nil)
+    let mpCard = MPCard(
+      cardNoMPText,
+      cardHolderName,
+      cvvMPText,
+      expiryDate,
+      checkboxProvider // checkbox is required - SDK validates terms and conditions
+    )
+    
+    // Call SDK addCard method with completion handler
+    // Signature: addCard(_:accountKey:accountKeyType:rrn:userId:card:cardAlias:isMsisdnValidatedByMerchant:authenticationMethod:_:_:)
+    MasterPass.addCard(
+      jToken,
       accountKey: accountKey ?? "",
-      completion: { (error: ServiceError?, result: MPResponse<LinkToMerchantResponse>?) in
+      accountKeyType: accountKeyTypeEnum,
+      rrn: rrn ?? "",
+      userId: userId ?? "",
+      card: mpCard,
+      cardAlias: cardAlias ?? "",
+      isMsisdnValidatedByMerchant: isMsisdnValidatedByMerchant?.boolValue ?? false,
+      authenticationMethod: authType,
+      additionalParamsDict,
+      { (error: ServiceError?, result: MPResponse<GeneralResponseWith3D>?) in
         if let error = error {
           // Handle error
-          var errorMessage = error.responseDesc ?? "Link Account To Merchant failed"
+          var errorMessage = error.responseDesc ?? "Add Card failed"
           if let responseCode = error.responseCode {
             errorMessage += " (Code: \(responseCode))"
           }
@@ -178,15 +191,12 @@ class RCTMasterpassModule: RCTEventEmitter {
           // Handle success response
           var responseDict: [String: Any] = [:]
           
-          responseDict["statusCode"] = response.statusCode ?? 200
-          responseDict["message"] = response.message ?? "Account linked successfully"
+          // MPResponse fields - buildId, statusCode, message are non-optional
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
           
-          if let buildId = response.buildId {
-            responseDict["buildId"] = buildId
-          } else {
-            responseDict["buildId"] = NSNull()
-          }
-          
+          // Optional fields
           if let version = response.version {
             responseDict["version"] = version
           } else {
@@ -208,18 +218,139 @@ class RCTMasterpassModule: RCTEventEmitter {
           // Check for exception
           if let exception = response.exception {
             var exceptionDict: [String: Any] = [:]
-            exceptionDict["level"] = exception.level ?? ""
-            exceptionDict["code"] = exception.code ?? ""
-            exceptionDict["message"] = exception.message ?? ""
+            // ExceptionResponse fields are non-optional
+            exceptionDict["level"] = exception.level
+            exceptionDict["code"] = exception.code
+            exceptionDict["message"] = exception.message
             responseDict["exception"] = exceptionDict
-            rejecter("ERROR", exception.message ?? response.message ?? "Link Account To Merchant failed with exception", nil)
+            rejecter("ERROR", exception.message, nil)
             return
           }
           
-          // Handle result
+          // Handle result - GeneralResponseWith3D
           if let resultObj = response.result {
             var resultDict: [String: Any] = [:]
-            // LinkToMerchantResponse fields - adjust based on actual SDK response structure
+            resultDict["token"] = resultObj.token
+            resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber
+            resultDict["responseCode"] = resultObj.responseCode
+            resultDict["resultDescription"] = resultObj.resultDescription
+            
+            if let url3d = resultObj.url3d {
+              resultDict["url3d"] = url3d.absoluteString
+            } else {
+              resultDict["url3d"] = NSNull()
+            }
+            
+            if let url3dSuccess = resultObj.url3dSuccess {
+              resultDict["url3dSuccess"] = url3dSuccess.absoluteString
+            } else {
+              resultDict["url3dSuccess"] = NSNull()
+            }
+            
+            if let url3dFail = resultObj.url3dFail {
+              resultDict["url3dFail"] = url3dFail.absoluteString
+            } else {
+              resultDict["url3dFail"] = NSNull()
+            }
+            
+            resultDict["jToken"] = jToken
+            if let cardAlias = cardAlias {
+              resultDict["cardAlias"] = cardAlias
+            } else {
+              resultDict["cardAlias"] = NSNull()
+            }
+            
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Add Card failed: No response received", nil)
+        }
+      }
+    )
+  }
+  
+  // Helper method to convert SDK response to dictionary
+  private func convertResponseToDictionary(_ response: Any) -> [String: Any]? {
+    // This will be implemented based on actual SDK response structure
+    // For now, return basic structure
+    return ["response": "\(response)"]
+  }
+  
+  // MARK: - Link Account To Merchant
+  
+  @objc func linkAccountToMerchant(_ jToken: String, accountKey: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
+    // Call SDK linkAccountToMerchant method with completion handler
+    // Signature: linkAccountToMerchant(_:_:_:)
+    MasterPass.linkAccountToMerchant(
+      jToken,
+      accountKey ?? "",
+      { (error: ServiceError?, result: MPResponse<LinkToMerchantResponse>?) in
+        if let error = error {
+          // Handle error
+          var errorMessage = error.responseDesc ?? "Link Account To Merchant failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
+            errorMessage += " [MD Status: \(mdStatus)]"
+          }
+          if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
+            errorMessage += " [MD Error: \(mdErrorMsg)]"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          // Handle success response
+          var responseDict: [String: Any] = [:]
+          
+          // MPResponse fields - buildId, statusCode, message are non-optional
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          
+          // Optional fields
+          if let version = response.version {
+            responseDict["version"] = version
+          } else {
+            responseDict["version"] = NSNull()
+          }
+          
+          if let correlationId = response.correlationId {
+            responseDict["correlationId"] = correlationId
+          } else {
+            responseDict["correlationId"] = NSNull()
+          }
+          
+          if let requestId = response.requestId {
+            responseDict["requestId"] = requestId
+          } else {
+            responseDict["requestId"] = NSNull()
+          }
+          
+          // Check for exception
+          if let exception = response.exception {
+            var exceptionDict: [String: Any] = [:]
+            // ExceptionResponse fields are non-optional
+            exceptionDict["level"] = exception.level
+            exceptionDict["code"] = exception.code
+            exceptionDict["message"] = exception.message
+            responseDict["exception"] = exceptionDict
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          // Handle result - LinkToMerchantResponse
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            resultDict["token"] = resultObj.token
+            resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber
+            resultDict["responseCode"] = resultObj.responseCode
+            resultDict["description"] = resultObj.description
+            resultDict["cardIssuerName"] = resultObj.cardIssuerName
+            resultDict["maskedPan"] = resultObj.maskedPan
             resultDict["jToken"] = jToken
             if let accountKey = accountKey {
               resultDict["accountKey"] = accountKey
@@ -237,7 +368,6 @@ class RCTMasterpassModule: RCTEventEmitter {
         }
       }
     )
-    */
   }
   
   // MARK: - Account Access

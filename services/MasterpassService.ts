@@ -48,15 +48,73 @@ class MasterpassService {
     }
 
     try {
+      // Validate and provide defaults for required card fields
+      if (!params.card) {
+        throw new Error('Card information is required');
+      }
+
+      // Ensure card fields have default values and are not empty
+      // Remove any spaces or special characters from card number
+      const cardNumber = (params.card.cardNumber || '').replace(/\s+/g, '');
+      
+      // Normalize expiry date format (MM/YY or MMYY -> MMYY)
+      let expiryDate = (params.card.expiryDate || '').replace(/\s+/g, '');
+      if (expiryDate.includes('/')) {
+        expiryDate = expiryDate.replace('/', '');
+      }
+      
+      const cvv = (params.card.cvv || '').replace(/\s+/g, '');
+      const cardHolderName = (params.card.cardHolderName || '').trim();
+
+      const card = {
+        cardNumber: cardNumber,
+        expiryDate: expiryDate,
+        cvv: cvv,
+        cardHolderName: cardHolderName,
+      };
+
+      // Validate required fields
+      if (!card.cardNumber || card.cardNumber.length === 0) {
+        throw new Error('Card number is required');
+      }
+
+      if (!card.expiryDate || card.expiryDate.length === 0) {
+        throw new Error('Expiry date is required');
+      }
+
+      if (!card.cvv || card.cvv.length === 0) {
+        throw new Error('CVV is required');
+      }
+
+      // Validate card number format (should be 13-19 digits)
+      if (!/^\d{13,19}$/.test(card.cardNumber)) {
+        throw new Error(`Card number must be 13-19 digits. Received: ${card.cardNumber.length} digits`);
+      }
+
+      // Validate expiry date format (should be 4 digits: MMYY)
+      if (!/^\d{4}$/.test(card.expiryDate)) {
+        throw new Error(`Expiry date must be 4 digits (MMYY). Received: '${card.expiryDate}'`);
+      }
+
+      // Validate CVV format (should be 3-4 digits)
+      if (!/^\d{3,4}$/.test(card.cvv)) {
+        throw new Error(`CVV must be 3-4 digits. Received: '${card.cvv}'`);
+      }
+
+      // Ensure jToken is provided
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
       const response = await MasterpassModule.addCard(
         params.jToken,
         params.accountKey || null,
         params.accountKeyType || null,
         params.rrn || null,
         params.userId || null,
-        params.card || null,
+        card, // Use validated card object
         params.cardAlias || null,
-        params.isMsisdnValidatedByMerchant || null,
+        params.isMsisdnValidatedByMerchant ?? false,
         params.authenticationMethod || null,
         params.additionalParams || null,
       );
