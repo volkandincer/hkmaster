@@ -320,6 +320,29 @@ export const MasterpassTestScreen: React.FC = () => {
     }
   }, []);
 
+  const handleResendOtp = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      // Generate random values for each call
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+
+      const result = await MasterpassService.resendOtp(
+        randomJToken,
+      );
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleClear = useCallback(() => {
     setResponse(null);
     setError(null);
@@ -395,6 +418,13 @@ export const MasterpassTestScreen: React.FC = () => {
           <MasterpassButton
             title="Verify OTP"
             onPress={handleVerify}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Resend OTP"
+            onPress={handleResendOtp}
             loading={loading}
             disabled={loading}
           />

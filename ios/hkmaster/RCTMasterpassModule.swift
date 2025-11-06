@@ -975,7 +975,79 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Resend OTP
   
   @objc func resendOtp(_ jToken: String, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Resend OTP - Not implemented yet"])
+    // Call SDK resendOtp method with completion handler
+    // iOS SDK signature: resendOtp(_:_:)
+    MasterPass.resendOtp(
+      jToken,
+      { (error: ServiceError?, result: MPResponse<GeneralResponse>?) in
+        if let error = error {
+          // Handle error
+          var errorMessage = error.responseDesc ?? "Resend OTP failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
+            errorMessage += " [MD Status: \(mdStatus)]"
+          }
+          if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
+            errorMessage += " [MD Error: \(mdErrorMsg)]"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          // Handle success response
+          var responseDict: [String: Any] = [:]
+          
+          // MPResponse fields - buildId, statusCode, message are non-optional
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          
+          // Optional fields
+          if let version = response.version {
+            responseDict["version"] = version
+          } else {
+            responseDict["version"] = NSNull()
+          }
+          
+          if let correlationId = response.correlationId {
+            responseDict["correlationId"] = correlationId
+          } else {
+            responseDict["correlationId"] = NSNull()
+          }
+          
+          if let requestId = response.requestId {
+            responseDict["requestId"] = requestId
+          } else {
+            responseDict["requestId"] = NSNull()
+          }
+          
+          // Check for exception
+          if let exception = response.exception {
+            var exceptionDict: [String: Any] = [:]
+            exceptionDict["level"] = exception.level
+            exceptionDict["code"] = exception.code
+            exceptionDict["message"] = exception.message
+            responseDict["exception"] = exceptionDict
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          // Handle result - GeneralResponse
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            // GeneralResponse typically contains success confirmation
+            resultDict["status"] = "success"
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Resend OTP failed: No response received", nil)
+        }
+      }
+    )
   }
   
   // MARK: - Start 3D Validation
