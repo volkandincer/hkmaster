@@ -72,6 +72,12 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -84,6 +90,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
     }
     signingConfigs {
         debug {
@@ -116,4 +125,7 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    
+    // Masterpass Android SDK - Local AAR file
+    implementation(name: 'masterpass-release', ext: 'aar')
 }
