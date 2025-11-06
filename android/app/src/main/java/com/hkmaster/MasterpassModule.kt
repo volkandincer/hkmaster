@@ -1025,12 +1025,124 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         newUserId = newUserId ?: "",
         addUserIdListener = object : AddUserIdListener {
           override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.AddUserIdResponse>) {
-            val result = convertMPResponseToMap(response)
-            promise.resolve(result)
+            try {
+              // Check if response has exception - even in onSuccess, SDK might return exception
+              if (response.exception != null) {
+                val errorMap = Arguments.createMap()
+                errorMap.putInt("statusCode", response.statusCode ?: 500)
+                errorMap.putString("message", response.message ?: "Add User ID failed")
+                
+                if (response.buildId != null) {
+                  errorMap.putString("buildId", response.buildId)
+                } else {
+                  errorMap.putNull("buildId")
+                }
+                
+                if (response.version != null) {
+                  errorMap.putString("version", response.version)
+                } else {
+                  errorMap.putNull("version")
+                }
+                
+                if (response.correlationId != null) {
+                  errorMap.putString("correlationId", response.correlationId)
+                } else {
+                  errorMap.putNull("correlationId")
+                }
+                
+                if (response.requestId != null) {
+                  errorMap.putString("requestId", response.requestId)
+                } else {
+                  errorMap.putNull("requestId")
+                }
+                
+                val exceptionMap = Arguments.createMap()
+                exceptionMap.putString("level", response.exception?.level ?: "")
+                exceptionMap.putString("code", response.exception?.code ?: "")
+                exceptionMap.putString("message", response.exception?.message ?: "")
+                errorMap.putMap("exception", exceptionMap)
+                
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Add User ID failed with exception", null)
+                return
+              }
+              
+              val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Add User ID successful")
+              
+              // Handle nullable strings properly
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle AddUserIdResponse result
+              val resultObj = response.result
+              if (resultObj is com.paycore.masterpass.models.account.AddUserIdResponse) {
+                val addUserIdResult = Arguments.createMap()
+                
+                // AddUserIdResponse typically contains success confirmation
+                // Map any fields from AddUserIdResponse if available
+                addUserIdResult.putString("status", "success")
+                
+                result.putMap("result", addUserIdResult)
+              } else if (resultObj != null) {
+                // Fallback: if result is not AddUserIdResponse, wrap it in result object
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                // If result is null, put null in result field
+                result.putNull("result")
+              }
+              
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
           }
           
           override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
-            promise.reject("ERROR", error.responseDesc ?: "Add User ID failed", null)
+            try {
+              // Send complete error information including all ServiceError fields
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Add User ID failed")
+              
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              if (!error.mdStatus.isNullOrBlank()) {
+                errorMessage.append(" [MD Status: ${error.mdStatus}]")
+              }
+              if (!error.mdErrorMsg.isNullOrBlank()) {
+                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              }
+              
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Add User ID failed", null)
+            }
           }
         }
       )

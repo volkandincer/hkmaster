@@ -300,6 +300,45 @@ class MasterpassService {
       throw new Error(`Masterpass updateUserMsisdn failed: ${errorMessage}`);
     }
   }
+
+  /**
+   * Add User ID to Masterpass
+   */
+  async addUserId(
+    jToken: string,
+    accountKey?: string,
+    currentUserId?: string,
+    newUserId?: string,
+  ): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      // Validate jToken
+      if (!jToken || jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      // Validate newUserId
+      if (!newUserId || newUserId.trim().length === 0) {
+        throw new Error('newUserId is required');
+      }
+
+      const response = await MasterpassModule.addUserId(
+        jToken,
+        accountKey || null,
+        currentUserId || null,
+        newUserId,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass addUserId failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default new MasterpassService();

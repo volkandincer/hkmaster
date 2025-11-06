@@ -266,6 +266,35 @@ export const MasterpassTestScreen: React.FC = () => {
     }
   }, []);
 
+  const handleAddUserId = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      // Generate random values for each call
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomCurrentUserId = `user-${generateRandomString(12)}`;
+      const randomNewUserId = `user-${generateRandomString(12)}-new`;
+
+      const result = await MasterpassService.addUserId(
+        randomJToken,
+        randomAccountKey,
+        randomCurrentUserId,
+        randomNewUserId,
+      );
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleClear = useCallback(() => {
     setResponse(null);
     setError(null);
@@ -327,6 +356,13 @@ export const MasterpassTestScreen: React.FC = () => {
           <MasterpassButton
             title="Update User MSISDN"
             onPress={handleUpdateUserMsisdn}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Add User ID"
+            onPress={handleAddUserId}
             loading={loading}
             disabled={loading}
           />

@@ -788,7 +788,82 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Add User ID
   
   @objc func addUserId(_ jToken: String, accountKey: String?, currentUserId: String?, newUserId: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Add User ID - Not implemented yet"])
+    // Call SDK addUserId method with completion handler
+    // iOS SDK signature: addUserId(_:accountKey:currentUserId:newUserId:_:)
+    MasterPass.addUserId(
+      jToken,
+      accountKey ?? "",
+      currentUserId ?? "",
+      newUserId ?? "",
+      { (error: ServiceError?, result: MPResponse<GeneralResponse>?) in
+        if let error = error {
+          // Handle error
+          var errorMessage = error.responseDesc ?? "Add User ID failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
+            errorMessage += " [MD Status: \(mdStatus)]"
+          }
+          if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
+            errorMessage += " [MD Error: \(mdErrorMsg)]"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          // Handle success response
+          var responseDict: [String: Any] = [:]
+          
+          // MPResponse fields - buildId, statusCode, message are non-optional
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          
+          // Optional fields
+          if let version = response.version {
+            responseDict["version"] = version
+          } else {
+            responseDict["version"] = NSNull()
+          }
+          
+          if let correlationId = response.correlationId {
+            responseDict["correlationId"] = correlationId
+          } else {
+            responseDict["correlationId"] = NSNull()
+          }
+          
+          if let requestId = response.requestId {
+            responseDict["requestId"] = requestId
+          } else {
+            responseDict["requestId"] = NSNull()
+          }
+          
+          // Check for exception
+          if let exception = response.exception {
+            var exceptionDict: [String: Any] = [:]
+            exceptionDict["level"] = exception.level
+            exceptionDict["code"] = exception.code
+            exceptionDict["message"] = exception.message
+            responseDict["exception"] = exceptionDict
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          // Handle result - GeneralResponse
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            // GeneralResponse typically contains success confirmation
+            resultDict["status"] = "success"
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Add User ID failed: No response received", nil)
+        }
+      }
+    )
   }
   
   // MARK: - Recurring Order Register
