@@ -19,12 +19,15 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Initialize
   
   @objc func initialize(_ merchantId: NSNumber, terminalGroupId: String?, language: String?, url: String, cipherText: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    // Initialize SDK
+    // Normalize URL - ensure trailing slash is present for SDK to append paths correctly
+    let normalizedUrl = url.hasSuffix("/") ? url : url + "/"
+    
+    // Initialize SDK with normalized URL
     MasterPass.initialize(
       merchantId: merchantId.intValue,
       terminalGroupId: terminalGroupId,
       language: language ?? "en-US",
-      url: url,
+      url: normalizedUrl,
       cipherText: cipherText
     )
     
@@ -45,7 +48,7 @@ class RCTMasterpassModule: RCTEventEmitter {
       "message": "SDK initialized successfully",
       "merchantId": merchantId.intValue,
       "language": language ?? "en-US",
-      "url": url,
+      "url": normalizedUrl,
     ]
     
     // Handle optional values - use NSNull() to match Android null behavior
@@ -373,7 +376,171 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Account Access
   
   @objc func accountAccess(_ jToken: String, accountKey: String?, accountKeyType: String?, userId: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Account Access - Not implemented yet"])
+    // Convert accountKeyType to enum
+    let accountKeyTypeEnum: AccountKeyType?
+    if let accountKeyTypeStr = accountKeyType {
+      accountKeyTypeEnum = AccountKeyType(rawValue: accountKeyTypeStr.lowercased())
+    } else {
+      accountKeyTypeEnum = nil
+    }
+    
+    // Call SDK accountAccess method with completion handler
+    MasterPass.accountAccess(
+      jToken,
+      accountKey: accountKey ?? "",
+      accountKeyType: accountKeyTypeEnum,
+      userId: userId ?? "",
+      { (error: ServiceError?, result: MPResponse<CardResponse>?) in
+        if let error = error {
+          // Handle error
+          var errorMessage = error.responseDesc ?? "Account Access failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
+            errorMessage += " [MD Status: \(mdStatus)]"
+          }
+          if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
+            errorMessage += " [MD Error: \(mdErrorMsg)]"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          // Handle success response
+          var responseDict: [String: Any] = [:]
+          
+          // MPResponse fields - buildId, statusCode, message are non-optional
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          
+          // Optional fields
+          if let version = response.version {
+            responseDict["version"] = version
+          } else {
+            responseDict["version"] = NSNull()
+          }
+          
+          if let correlationId = response.correlationId {
+            responseDict["correlationId"] = correlationId
+          } else {
+            responseDict["correlationId"] = NSNull()
+          }
+          
+          if let requestId = response.requestId {
+            responseDict["requestId"] = requestId
+          } else {
+            responseDict["requestId"] = NSNull()
+          }
+          
+          // Check for exception
+          if let exception = response.exception {
+            var exceptionDict: [String: Any] = [:]
+            exceptionDict["level"] = exception.level
+            exceptionDict["code"] = exception.code
+            exceptionDict["message"] = exception.message
+            responseDict["exception"] = exceptionDict
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          // Handle result - CardResponse
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            resultDict["accountKey"] = resultObj.accountKey
+            resultDict["accountState"] = resultObj.accountState
+            
+            // Convert cards array
+            var cardsArray: [[String: Any]] = []
+            for card in resultObj.cards {
+              var cardDict: [String: Any] = [:]
+              cardDict["cardAlias"] = card.cardAlias
+              cardDict["cardState"] = card.cardState
+              cardDict["maskedCardNumber"] = card.maskedCardNumber
+              cardDict["uniqueCardNumber"] = card.uniqueCardNumber
+              cardDict["cardType"] = card.cardType
+              
+              if let productName = card.productName {
+                cardDict["productName"] = productName
+              } else {
+                cardDict["productName"] = NSNull()
+              }
+              
+              cardDict["cardBin"] = card.cardBin
+              
+              if let cardIssuerIcaNumber = card.cardIssuerIcaNumber {
+                cardDict["cardIssuerIcaNumber"] = cardIssuerIcaNumber
+              } else {
+                cardDict["cardIssuerIcaNumber"] = NSNull()
+              }
+              
+              cardDict["cardValidationType"] = card.cardValidationType
+              cardDict["isDefaultCard"] = card.isDefaultCard
+              cardDict["expireSoon"] = card.expireSoon
+              cardDict["isExpired"] = card.isExpired
+              cardDict["isMasterpassMember"] = card.isMasterpassMember
+              
+              cardsArray.append(cardDict)
+            }
+            resultDict["cards"] = cardsArray
+            
+            // Convert accountInformation
+            var accountInfoDict: [String: Any] = [:]
+            accountInfoDict["isAccountLinked"] = resultObj.accountInformation.isAccountLinked
+            resultDict["accountInformation"] = accountInfoDict
+            
+            // Convert recipientCards array (optional)
+            if let recipientCards = resultObj.recipientCards {
+              var recipientCardsArray: [[String: Any]] = []
+              for recipientCard in recipientCards {
+                var recipientCardDict: [String: Any] = [:]
+                if let alias = recipientCard.alias {
+                  recipientCardDict["alias"] = alias
+                } else {
+                  recipientCardDict["alias"] = NSNull()
+                }
+                if let encryptedNumber = recipientCard.encryptedNumber {
+                  recipientCardDict["encryptedNumber"] = encryptedNumber
+                } else {
+                  recipientCardDict["encryptedNumber"] = NSNull()
+                }
+                if let maskedNumber = recipientCard.maskedNumber {
+                  recipientCardDict["maskedNumber"] = maskedNumber
+                } else {
+                  recipientCardDict["maskedNumber"] = NSNull()
+                }
+                if let uniqueNumber = recipientCard.uniqueNumber {
+                  recipientCardDict["uniqueNumber"] = uniqueNumber
+                } else {
+                  recipientCardDict["uniqueNumber"] = NSNull()
+                }
+                if let issuerIca = recipientCard.issuerIca {
+                  recipientCardDict["issuerIca"] = issuerIca
+                } else {
+                  recipientCardDict["issuerIca"] = NSNull()
+                }
+                if let productName = recipientCard.productName {
+                  recipientCardDict["productName"] = productName
+                } else {
+                  recipientCardDict["productName"] = NSNull()
+                }
+                recipientCardsArray.append(recipientCardDict)
+              }
+              resultDict["recipientCards"] = recipientCardsArray
+            } else {
+              resultDict["recipientCards"] = NSNull()
+            }
+            
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Account Access failed: No response received", nil)
+        }
+      }
+    )
   }
   
   // MARK: - Remove Card

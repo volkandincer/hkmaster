@@ -153,6 +153,45 @@ class MasterpassService {
       );
     }
   }
+
+  /**
+   * Account Access - Get card information
+   */
+  async accountAccess(
+    jToken: string,
+    accountKey?: string,
+    accountKeyType?: string,
+    userId?: string,
+  ): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      // Validate jToken
+      if (!jToken || jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      // Validate accountKeyType if provided
+      if (accountKeyType && !['MSISDN', 'ID'].includes(accountKeyType.toUpperCase())) {
+        throw new Error('accountKeyType must be either "MSISDN" or "ID"');
+      }
+
+      const response = await MasterpassModule.accountAccess(
+        jToken,
+        accountKey || null,
+        accountKeyType || null,
+        userId || null,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass accountAccess failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default new MasterpassService();

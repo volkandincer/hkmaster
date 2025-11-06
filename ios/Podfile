@@ -12,6 +12,9 @@ linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
   use_frameworks! :linkage => linkage.to_sym
+else
+  # Use frameworks for Masterpass xcframework
+  use_frameworks! :linkage => :static
 end
 
 target 'hkmaster' do

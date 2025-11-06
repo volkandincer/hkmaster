@@ -52,7 +52,7 @@ const DEFAULT_CONFIG = {
   merchantId: 123456,
   terminalGroupId: undefined,
   language: 'tr-TR',
-  url: 'https://api.masterpass.com',
+  url: 'https://mp-test-sdk.masterpassturkiye.com/', // Trailing slash required for SDK to append paths correctly
   cipherText: undefined,
 };
 
@@ -154,6 +154,35 @@ export const MasterpassTestScreen: React.FC = () => {
     }
   }, []);
 
+  const handleAccountAccess = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      // Generate random values for each call
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomUserId = `user-${generateRandomString(12)}`;
+      const accountKeyType = 'MSISDN'; // or 'ID'
+
+      const result = await MasterpassService.accountAccess(
+        randomJToken,
+        randomAccountKey,
+        accountKeyType,
+        randomUserId,
+      );
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleClear = useCallback(() => {
     setResponse(null);
     setError(null);
@@ -187,6 +216,13 @@ export const MasterpassTestScreen: React.FC = () => {
           <MasterpassButton
             title="Link Account To Merchant"
             onPress={handleLinkAccountToMerchant}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Account Access"
+            onPress={handleAccountAccess}
             loading={loading}
             disabled={loading}
           />

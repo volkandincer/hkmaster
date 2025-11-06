@@ -433,12 +433,162 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         merchantUserId = userId ?: "",
         cardRequestListener = object : CardRequestListener {
           override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.CardResponse>) {
-            val result = convertMPResponseToMap(response)
-            promise.resolve(result)
+            try {
+              // Check if response has exception - even in onSuccess, SDK might return exception
+              if (response.exception != null) {
+                val errorMap = Arguments.createMap()
+                errorMap.putInt("statusCode", response.statusCode ?: 500)
+                errorMap.putString("message", response.message ?: "Account Access failed")
+                
+                if (response.buildId != null) {
+                  errorMap.putString("buildId", response.buildId)
+                } else {
+                  errorMap.putNull("buildId")
+                }
+                
+                if (response.version != null) {
+                  errorMap.putString("version", response.version)
+                } else {
+                  errorMap.putNull("version")
+                }
+                
+                if (response.correlationId != null) {
+                  errorMap.putString("correlationId", response.correlationId)
+                } else {
+                  errorMap.putNull("correlationId")
+                }
+                
+                if (response.requestId != null) {
+                  errorMap.putString("requestId", response.requestId)
+                } else {
+                  errorMap.putNull("requestId")
+                }
+                
+                val exceptionMap = Arguments.createMap()
+                exceptionMap.putString("level", response.exception?.level ?: "")
+                exceptionMap.putString("code", response.exception?.code ?: "")
+                exceptionMap.putString("message", response.exception?.message ?: "")
+                errorMap.putMap("exception", exceptionMap)
+                
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Account Access failed with exception", null)
+                return
+              }
+              
+              val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Account Access successful")
+              
+              // Handle nullable strings properly
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle CardResponse result
+              val resultObj = response.result
+              if (resultObj is com.paycore.masterpass.models.account.CardResponse) {
+                val cardResponseResult = Arguments.createMap()
+                
+                cardResponseResult.putString("accountKey", resultObj.accountKey)
+                cardResponseResult.putString("accountState", resultObj.accountState)
+                
+                // Convert cards array
+                val cardsArray = Arguments.createArray()
+                for (card in resultObj.cards) {
+                  val cardMap = Arguments.createMap()
+                  cardMap.putString("cardAlias", card.cardAlias)
+                  cardMap.putString("cardState", card.cardState)
+                  cardMap.putString("maskedCardNumber", card.maskedCardNumber)
+                  cardMap.putString("uniqueCardNumber", card.uniqueCardNumber)
+                  cardMap.putString("cardType", card.cardType)
+                  
+                  if (card.productName != null) {
+                    cardMap.putString("productName", card.productName)
+                  } else {
+                    cardMap.putNull("productName")
+                  }
+                  
+                  cardMap.putString("cardBin", card.cardBin)
+                  
+                  if (card.cardIssuerIcaNumber != null) {
+                    cardMap.putString("cardIssuerIcaNumber", card.cardIssuerIcaNumber)
+                  } else {
+                    cardMap.putNull("cardIssuerIcaNumber")
+                  }
+                  
+                  cardMap.putString("cardValidationType", card.cardValidationType)
+                  cardMap.putBoolean("isDefaultCard", card.isDefaultCard)
+                  cardMap.putBoolean("expireSoon", card.expireSoon)
+                  cardMap.putBoolean("isExpired", card.isExpired)
+                  cardMap.putBoolean("isMasterpassMember", card.isMasterpassMember)
+                  
+                  cardsArray.pushMap(cardMap)
+                }
+                cardResponseResult.putArray("cards", cardsArray)
+                
+                // Android SDK CardResponse doesn't have accountInformation or recipientCards
+                // These fields are iOS-specific, so we set them to null for Android
+                cardResponseResult.putNull("accountInformation")
+                cardResponseResult.putNull("recipientCards")
+                
+                result.putMap("result", cardResponseResult)
+              } else if (resultObj != null) {
+                // Fallback: if result is not CardResponse, wrap it in result object
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                // If result is null, put null in result field
+                result.putNull("result")
+              }
+              
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
           }
           
           override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
-            promise.reject("ERROR", error.responseDesc ?: "Account Access failed", null)
+            try {
+              // Send complete error information including all ServiceError fields
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Account Access failed")
+              
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              if (!error.mdStatus.isNullOrBlank()) {
+                errorMessage.append(" [MD Status: ${error.mdStatus}]")
+              }
+              if (!error.mdErrorMsg.isNullOrBlank()) {
+                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              }
+              
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Account Access failed", null)
+            }
           }
         }
       )
