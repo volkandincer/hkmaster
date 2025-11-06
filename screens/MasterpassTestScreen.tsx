@@ -5,7 +5,49 @@ import { MasterpassResponseDisplay } from '../components/MasterpassResponseDispl
 import MasterpassService from '../services/MasterpassService';
 import { MasterpassResponse } from '../interfaces/MasterpassResponse.interface';
 
-// Default değerler - Buraya test için gerçek değerleri ekleyebilirsiniz
+// Helper functions for generating random values
+const generateRandomString = (length: number): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+const generateRandomNumber = (min: number, max: number): number => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const generateRandomCardNumber = (): string => {
+  // Generate a valid-looking card number (16 digits)
+  let cardNumber = '';
+  for (let i = 0; i < 16; i++) {
+    cardNumber += generateRandomNumber(0, 9).toString();
+  }
+  return cardNumber;
+};
+
+const generateRandomExpiryDate = (): string => {
+  const month = generateRandomNumber(1, 12).toString().padStart(2, '0');
+  const year = generateRandomNumber(25, 30).toString();
+  return `${month}/${year}`;
+};
+
+const generateRandomCVV = (): string => {
+  return generateRandomNumber(100, 999).toString();
+};
+
+const generateRandomRRN = (): string => {
+  // RRN is typically 12 digits
+  let rrn = '';
+  for (let i = 0; i < 12; i++) {
+    rrn += generateRandomNumber(0, 9).toString();
+  }
+  return rrn;
+};
+
+// Default config values
 const DEFAULT_CONFIG = {
   merchantId: 123456,
   terminalGroupId: undefined,
@@ -43,6 +85,75 @@ export const MasterpassTestScreen: React.FC = () => {
     }
   }, []);
 
+  const handleAddCard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      // Generate random values for each call
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomRRN = generateRandomRRN();
+      const randomUserId = `user-${generateRandomString(12)}`;
+      const randomCardNumber = generateRandomCardNumber();
+      const randomExpiryDate = generateRandomExpiryDate();
+      const randomCVV = generateRandomCVV();
+      const randomCardHolderName = `Test User ${generateRandomString(8)}`;
+      const randomCardAlias = `Card ${generateRandomString(6)}`;
+
+      const result = await MasterpassService.addCard({
+        jToken: randomJToken,
+        accountKey: undefined,
+        accountKeyType: undefined,
+        rrn: randomRRN,
+        userId: randomUserId,
+        card: {
+          cardNumber: randomCardNumber,
+          expiryDate: randomExpiryDate,
+          cvv: randomCVV,
+          cardHolderName: randomCardHolderName,
+        },
+        cardAlias: randomCardAlias,
+        isMsisdnValidatedByMerchant: false,
+        authenticationMethod: undefined,
+        additionalParams: undefined,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleLinkAccountToMerchant = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      // Generate random values for each call
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+
+      const result = await MasterpassService.linkAccountToMerchant(
+        randomJToken,
+        randomAccountKey,
+      );
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleClear = useCallback(() => {
     setResponse(null);
     setError(null);
@@ -55,13 +166,27 @@ export const MasterpassTestScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}>
         <View style={styles.headerContainer}>
           <Text style={styles.title}>Masterpass SDK Test</Text>
-          <Text style={styles.subtitle}>Initialize Function</Text>
+          <Text style={styles.subtitle}>Functions</Text>
         </View>
 
         <View style={styles.buttonContainer}>
           <MasterpassButton
             title="Initialize SDK"
             onPress={handleInitialize}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Add Card"
+            onPress={handleAddCard}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Link Account To Merchant"
+            onPress={handleLinkAccountToMerchant}
             loading={loading}
             disabled={loading}
           />

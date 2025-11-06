@@ -14,6 +14,11 @@ import com.paycore.masterpass.enums.AccountKeyType
 import com.paycore.masterpass.enums.AuthType
 import com.paycore.masterpass.enums.MPCurrencyCode
 import com.paycore.masterpass.listener.*
+import com.paycore.masterpass.services.AccountServices
+import com.paycore.masterpass.mp.MPCard
+import com.paycore.masterpass.view.MPText
+import com.paycore.masterpass.view.MPCheckBox
+import android.app.Activity
 
 class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
   
@@ -96,15 +101,229 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun addCard(jToken: String, accountKey: String?, accountKeyType: String?, rrn: String?, userId: String?, card: ReadableMap?, cardAlias: String?, isMsisdnValidatedByMerchant: Boolean?, authenticationMethod: String?, additionalParams: ReadableMap?, promise: Promise) {
     try {
-      // TODO: Real SDK implementation
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Add Card - Bridge working")
-      result.putString("jToken", jToken)
-      result.putString("cardAlias", cardAlias)
-      promise.resolve(result)
+      // Extract card information
+      var cardNumber: String? = null
+      var expiryDate: String? = null
+      var cvv: String? = null
+      var cardHolderName: String? = null
+      
+      card?.let { cardMap ->
+        cardNumber = cardMap.getString("cardNumber")
+        expiryDate = cardMap.getString("expiryDate")
+        cvv = cardMap.getString("cvv")
+        cardHolderName = cardMap.getString("cardHolderName")
+      }
+      
+      // Convert accountKeyType to enum (non-nullable required by SDK)
+      val accountKeyTypeEnum = accountKeyType?.let {
+        AccountKeyType.values().find { type -> type.name.equals(accountKeyType, ignoreCase = true) }
+      } ?: AccountKeyType.MSISDN // Default value
+      
+      // Get current activity for context
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      // Validate required fields
+      if (cardNumber.isNullOrBlank()) {
+        promise.reject("ERROR", "Card number is required", null)
+        return
+      }
+      
+      if (expiryDate.isNullOrBlank()) {
+        promise.reject("ERROR", "Expiry date is required", null)
+        return
+      }
+      
+      if (cvv.isNullOrBlank()) {
+        promise.reject("ERROR", "CVV is required", null)
+        return
+      }
+      
+      // Create MPText instances for card number and CVV
+      val cardNoMPText = MPText(activity)
+      cardNoMPText.setText(cardNumber)
+      
+      val cvvMPText = MPText(activity)
+      cvvMPText.setText(cvv)
+      
+      // Create MPCheckBox (optional, can be null)
+      val checkBox = MPCheckBox(activity)
+      
+      // Create MPCard object - use non-null values for required fields
+      val mpCard = MPCard(
+        cardNo = cardNoMPText,
+        cvv = cvvMPText,
+        cardHolder = cardHolderName ?: "",
+        cardAlias = cardAlias ?: "",
+        date = expiryDate,
+        checkBox = checkBox
+      )
+      
+      // Call AccountServices.saveCard with correct parameter format
+      // Note: SDK uses saveCard method, but we format parameters according to addCard signature
+      AccountServices.Companion.saveCard(
+        jToken = jToken,
+        accountKey = accountKey?.takeIf { it.isNotBlank() } ?: "",
+        accountKeyType = accountKeyTypeEnum,
+        rrn = rrn?.takeIf { it.isNotBlank() } ?: "",
+        card = mpCard,
+        saveCardListener = object : SaveCardListener {
+          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.CardSaveResponse>) {
+            try {
+              // Check if response has exception - even in onSuccess, SDK might return exception
+              if (response.exception != null) {
+                val errorMap = Arguments.createMap()
+                errorMap.putInt("statusCode", response.statusCode ?: 500)
+                errorMap.putString("message", response.message ?: "Add Card failed")
+                
+                if (response.buildId != null) {
+                  errorMap.putString("buildId", response.buildId)
+                } else {
+                  errorMap.putNull("buildId")
+                }
+                
+                if (response.version != null) {
+                  errorMap.putString("version", response.version)
+                } else {
+                  errorMap.putNull("version")
+                }
+                
+                if (response.correlationId != null) {
+                  errorMap.putString("correlationId", response.correlationId)
+                } else {
+                  errorMap.putNull("correlationId")
+                }
+                
+                if (response.requestId != null) {
+                  errorMap.putString("requestId", response.requestId)
+                } else {
+                  errorMap.putNull("requestId")
+                }
+                
+                val exceptionMap = Arguments.createMap()
+                exceptionMap.putString("level", response.exception?.level ?: "")
+                exceptionMap.putString("code", response.exception?.code ?: "")
+                exceptionMap.putString("message", response.exception?.message ?: "")
+                errorMap.putMap("exception", exceptionMap)
+                
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Add Card failed with exception", null)
+                return
+              }
+              
+              val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Card saved successfully")
+              
+              // Handle nullable strings properly
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Wrap CardSaveResponse in a result object to match TypeScript interface
+              val resultObj = response.result
+              if (resultObj is com.paycore.masterpass.models.account.CardSaveResponse) {
+                val cardSaveResult = Arguments.createMap()
+                
+                // Handle nullable fields properly
+                if (resultObj.token != null) {
+                  cardSaveResult.putString("token", resultObj.token)
+                } else {
+                  cardSaveResult.putNull("token")
+                }
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  cardSaveResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  cardSaveResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  cardSaveResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  cardSaveResult.putNull("responseCode")
+                }
+                
+                if (resultObj.resultDescription != null) {
+                  cardSaveResult.putString("resultDescription", resultObj.resultDescription)
+                } else {
+                  cardSaveResult.putNull("resultDescription")
+                }
+                
+                cardSaveResult.putString("jToken", jToken)
+                
+                if (cardAlias != null) {
+                  cardSaveResult.putString("cardAlias", cardAlias)
+                } else {
+                  cardSaveResult.putNull("cardAlias")
+                }
+                
+                result.putMap("result", cardSaveResult)
+              } else if (resultObj != null) {
+                // Fallback: if result is not CardSaveResponse, wrap it in result object
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                // If result is null, put null in result field
+                result.putNull("result")
+              }
+              
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+            try {
+              // Send complete error information including all ServiceError fields
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Add Card failed")
+              
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              if (!error.mdStatus.isNullOrBlank()) {
+                errorMessage.append(" [MD Status: ${error.mdStatus}]")
+              }
+              if (!error.mdErrorMsg.isNullOrBlank()) {
+                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              }
+              
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Add Card failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
-      promise.reject("ERROR", e.message ?: "Unknown error", e)
+      promise.reject("ERROR", "Add Card failed: ${e.message ?: "Unknown error"}", e)
     }
   }
   
@@ -119,12 +338,74 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         accountKey = accountKey ?: "",
         linkToMerchantListener = object : LinkToMerchantListener {
           override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.LinkToMerchantResponse>) {
-            val result = convertMPResponseToMap(response)
-            promise.resolve(result)
+            try {
+              // Check if response has exception - even in onSuccess, SDK might return exception
+              if (response.exception != null) {
+                val errorMap = Arguments.createMap()
+                errorMap.putInt("statusCode", response.statusCode ?: 500)
+                errorMap.putString("message", response.message ?: "Link Account To Merchant failed")
+                
+                if (response.buildId != null) {
+                  errorMap.putString("buildId", response.buildId)
+                } else {
+                  errorMap.putNull("buildId")
+                }
+                
+                if (response.version != null) {
+                  errorMap.putString("version", response.version)
+                } else {
+                  errorMap.putNull("version")
+                }
+                
+                if (response.correlationId != null) {
+                  errorMap.putString("correlationId", response.correlationId)
+                } else {
+                  errorMap.putNull("correlationId")
+                }
+                
+                if (response.requestId != null) {
+                  errorMap.putString("requestId", response.requestId)
+                } else {
+                  errorMap.putNull("requestId")
+                }
+                
+                val exceptionMap = Arguments.createMap()
+                exceptionMap.putString("level", response.exception?.level ?: "")
+                exceptionMap.putString("code", response.exception?.code ?: "")
+                exceptionMap.putString("message", response.exception?.message ?: "")
+                errorMap.putMap("exception", exceptionMap)
+                
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Link Account To Merchant failed with exception", null)
+                return
+              }
+              
+              val result = convertMPResponseToMap(response)
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
           }
           
           override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
-            promise.reject("ERROR", error.responseDesc ?: "Link Account To Merchant failed", null)
+            try {
+              // Send complete error information including all ServiceError fields
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Link Account To Merchant failed")
+              
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              if (!error.mdStatus.isNullOrBlank()) {
+                errorMessage.append(" [MD Status: ${error.mdStatus}]")
+              }
+              if (!error.mdErrorMsg.isNullOrBlank()) {
+                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              }
+              
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Link Account To Merchant failed", null)
+            }
           }
         }
       )
