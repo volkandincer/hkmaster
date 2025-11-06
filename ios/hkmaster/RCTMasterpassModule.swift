@@ -887,7 +887,89 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Verify
   
   @objc func verify(_ jToken: String, otp: String, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Verify - Not implemented yet"])
+    // Create MPText instance for OTP on main thread
+    // MPText requires type to be set to .otp or .rta
+    // MPText is a UIView subclass, so it must be created on main thread
+    DispatchQueue.main.async {
+      let otpMPText = MPText()
+      otpMPText.type = .otp
+      otpMPText.text = otp
+      
+      // Call SDK verify method with completion handler
+      // iOS SDK signature: verify(_:otp:_:)
+      MasterPass.verify(
+        jToken,
+        otp: otpMPText,
+        { (error: ServiceError?, result: MPResponse<VerifyResponse>?) in
+          if let error = error {
+            // Handle error
+            var errorMessage = error.responseDesc ?? "Verify failed"
+            if let responseCode = error.responseCode {
+              errorMessage += " (Code: \(responseCode))"
+            }
+            if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
+              errorMessage += " [MD Status: \(mdStatus)]"
+            }
+            if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
+              errorMessage += " [MD Error: \(mdErrorMsg)]"
+            }
+            rejecter("ERROR", errorMessage, nil)
+          } else if let response = result {
+            // Handle success response
+            var responseDict: [String: Any] = [:]
+            
+            // MPResponse fields - buildId, statusCode, message are non-optional
+            responseDict["statusCode"] = response.statusCode
+            responseDict["message"] = response.message
+            responseDict["buildId"] = response.buildId
+            
+            // Optional fields
+            if let version = response.version {
+              responseDict["version"] = version
+            } else {
+              responseDict["version"] = NSNull()
+            }
+            
+            if let correlationId = response.correlationId {
+              responseDict["correlationId"] = correlationId
+            } else {
+              responseDict["correlationId"] = NSNull()
+            }
+            
+            if let requestId = response.requestId {
+              responseDict["requestId"] = requestId
+            } else {
+              responseDict["requestId"] = NSNull()
+            }
+            
+            // Check for exception
+            if let exception = response.exception {
+              var exceptionDict: [String: Any] = [:]
+              exceptionDict["level"] = exception.level
+              exceptionDict["code"] = exception.code
+              exceptionDict["message"] = exception.message
+              responseDict["exception"] = exceptionDict
+              rejecter("ERROR", exception.message, nil)
+              return
+            }
+            
+            // Handle result - VerifyResponse
+            if let resultObj = response.result {
+              var resultDict: [String: Any] = [:]
+              // VerifyResponse typically contains success confirmation
+              resultDict["status"] = "success"
+              responseDict["result"] = resultDict
+            } else {
+              responseDict["result"] = NSNull()
+            }
+            
+            resolver(responseDict)
+          } else {
+            rejecter("ERROR", "Verify failed: No response received", nil)
+          }
+        }
+      )
+    }
   }
   
   // MARK: - Resend OTP

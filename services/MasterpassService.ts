@@ -339,6 +339,41 @@ class MasterpassService {
       throw new Error(`Masterpass addUserId failed: ${errorMessage}`);
     }
   }
+
+  /**
+   * Verify OTP in Masterpass
+   */
+  async verify(
+    jToken: string,
+    otp: string,
+  ): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      // Validate jToken
+      if (!jToken || jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      // Validate otp
+      if (!otp || otp.trim().length === 0) {
+        throw new Error('otp is required');
+      }
+
+      const response = await MasterpassModule.verify(
+        jToken,
+        otp,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass verify failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default new MasterpassService();
