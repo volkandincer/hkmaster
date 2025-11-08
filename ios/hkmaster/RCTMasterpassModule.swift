@@ -1053,7 +1053,65 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Start 3D Validation
   
   @objc func start3DValidation(_ jToken: String, returnURL: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Start 3D Validation - Not implemented yet"])
+    // Validate returnURL - SDK requires a valid URL, not empty string
+    // Even though documentation says it's optional, SDK throws error if empty
+    let validReturnURL = returnURL?.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let returnURLValue = validReturnURL, !returnURLValue.isEmpty else {
+      rejecter("ERROR", "returnURL is required for 3D Validation", nil)
+      return
+    }
+    
+    // Validate URL format
+    guard URL(string: returnURLValue) != nil else {
+      rejecter("ERROR", "returnURL must be a valid URL format", nil)
+      return
+    }
+    
+    // Create MPWebView for 3D Secure validation on main thread
+    // iOS SDK requires MPWebView (not WKWebView) for 3D Secure flow
+    // MPWebView is a UIView subclass, so it must be created on main thread
+    DispatchQueue.main.async {
+      let webView = MPWebView()
+      
+      // Call SDK start3DValidation method with completion handler
+      // iOS SDK signature: start3DValidation(_:returnURL:webView:_:)
+      // Note: SDK signature differs from documentation - actual signature uses returnURL before webView
+      // Completion handler returns Result<Status3D?, MPError>
+      // Note: SDK may require 3D Secure URL from payment response, not just returnURL
+      MasterPass.start3DValidation(
+        jToken,
+        returnURL: returnURLValue,
+        webView: webView,
+        { (result: Result<Status3D?, MPError>) in
+          switch result {
+          case .success(let status3D):
+            // Handle success
+            var responseDict: [String: Any] = [:]
+            responseDict["statusCode"] = 200
+            responseDict["message"] = "Start 3D Validation successful"
+            
+            if let status3D = status3D {
+              var statusDict: [String: Any] = [:]
+              // Map Status3D fields if available
+              statusDict["status"] = "success"
+              responseDict["result"] = statusDict
+            } else {
+              responseDict["result"] = NSNull()
+            }
+            
+            resolver(responseDict)
+          case .failure(let error):
+            // Handle error - SDK may return "No URL" if 3D Secure URL is missing
+            // This typically means the 3D Secure URL needs to come from payment response
+            var errorMessage = error.localizedDescription
+            if errorMessage.contains("No URL") || errorMessage.contains("no URL") {
+              errorMessage = "3D Secure URL is required. This URL typically comes from payment response (paymentRequest or directPayment). returnURL alone is not sufficient."
+            }
+            rejecter("ERROR", errorMessage, nil)
+          }
+        }
+      )
+    }
   }
   
   // MARK: - Payment

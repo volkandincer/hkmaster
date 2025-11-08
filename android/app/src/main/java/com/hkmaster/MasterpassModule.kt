@@ -319,7 +319,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Add Card failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Add Card failed", null)
             }
           }
         }
@@ -381,8 +381,8 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 return
               }
               
-              val result = convertMPResponseToMap(response)
-              promise.resolve(result)
+            val result = convertMPResponseToMap(response)
+            promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
@@ -406,7 +406,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Link Account To Merchant failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Link Account To Merchant failed", null)
             }
           }
         }
@@ -563,7 +563,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("result")
               }
               
-              promise.resolve(result)
+            promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
@@ -587,7 +587,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Account Access failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Account Access failed", null)
             }
           }
         }
@@ -701,7 +701,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("result")
               }
               
-              promise.resolve(result)
+            promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
@@ -725,7 +725,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Remove Card failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Remove Card failed", null)
             }
           }
         }
@@ -840,7 +840,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("result")
               }
               
-              promise.resolve(result)
+            promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
@@ -864,7 +864,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Update User ID failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Update User ID failed", null)
             }
           }
         }
@@ -978,7 +978,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("result")
               }
               
-              promise.resolve(result)
+            promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
@@ -1002,7 +1002,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Update User MSISDN failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Update User MSISDN failed", null)
             }
           }
         }
@@ -1117,7 +1117,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("result")
               }
               
-              promise.resolve(result)
+            promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
@@ -1141,7 +1141,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Add User ID failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Add User ID failed", null)
             }
           }
         }
@@ -1299,7 +1299,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("result")
               }
               
-              promise.resolve(result)
+            promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
@@ -1323,7 +1323,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Verify failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Verify failed", null)
             }
           }
         }
@@ -1435,7 +1435,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("result")
               }
               
-              promise.resolve(result)
+            promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
@@ -1459,7 +1459,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
-              promise.reject("ERROR", error.responseDesc ?: "Resend OTP failed", null)
+            promise.reject("ERROR", error.responseDesc ?: "Resend OTP failed", null)
             }
           }
         }
@@ -1474,10 +1474,26 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun start3DValidation(jToken: String, returnURL: String?, promise: Promise) {
     try {
+      // Android SDK uses MPWebView for 3D Secure validation
+      // Found: Transaction3DListener and MPWebView.loadUrl(Transaction3DListener) exist in SDK
+      // However, 3D Secure URL typically comes from payment response
+      // Full implementation requires:
+      // 1. Get 3D Secure URL from payment response (paymentRequest/directPayment)
+      // 2. Create MPWebView instance
+      // 3. Set Transaction3DListener via webView.callback
+      // 4. Call MPWebView.loadUrl(Transaction3DListener) with the URL
+      // 
+      // For now, this is a placeholder that indicates MPWebView and Transaction3DListener are available
+      // but the 3D Secure URL needs to come from payment flow
       val result = Arguments.createMap()
       result.putInt("statusCode", 200)
-      result.putString("message", "Start 3D Validation - Bridge working (MPWebView needed for full implementation)")
+      result.putString("message", "Start 3D Validation - Bridge working (MPWebView and Transaction3DListener available, but 3D Secure URL required from payment response)")
       result.putString("jToken", jToken)
+      if (returnURL != null) {
+        result.putString("returnURL", returnURL)
+      } else {
+        result.putNull("returnURL")
+      }
       promise.resolve(result)
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)

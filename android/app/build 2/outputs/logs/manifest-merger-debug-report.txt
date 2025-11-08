@@ -1,0 +1,367 @@
+-- Merging decision tree log ---
+application
+INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:5:5-26:19
+INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:5:5-26:19
+MERGED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:18:5-22:19
+MERGED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:18:5-22:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:28:5-89
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/34096c5e99ddc910722b048fc3dbef43/transformed/startup-runtime-1.1.1/AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/34096c5e99ddc910722b048fc3dbef43/transformed/startup-runtime-1.1.1/AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5c17d801a1525c84bef6098582691ceb/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5c17d801a1525c84bef6098582691ceb/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
+MERGED from [com.facebook.soloader:soloader:0.12.1] /Users/volkan/.gradle/caches/9.0.0/transforms/88b2f673bf12c20241ec7b7a8e1afbaf/transformed/soloader-0.12.1/AndroidManifest.xml:11:5-15:19
+MERGED from [com.facebook.soloader:soloader:0.12.1] /Users/volkan/.gradle/caches/9.0.0/transforms/88b2f673bf12c20241ec7b7a8e1afbaf/transformed/soloader-0.12.1/AndroidManifest.xml:11:5-15:19
+	android:extractNativeLibs
+		INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+	android:supportsRtl
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:13:7-33
+	android:label
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:7:7-39
+	android:roundIcon
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:9:7-52
+	android:icon
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:8:7-41
+	android:allowBackup
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:10:7-34
+	android:theme
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:11:7-38
+	android:name
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:6:7-38
+	android:usesCleartextTraffic
+		INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:12:7-61
+manifest
+ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:1:1-27:12
+INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:1:1-27:12
+INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:1:1-27:12
+INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:1:1-27:12
+MERGED from [:react-native-safe-area-context] /Users/volkan/Desktop/hkmaster/node_modules/react-native-safe-area-context/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:2:1-24:12
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/078adca1e80583023f48431074220559/transformed/appcompat-resources-1.7.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.appcompat:appcompat:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/e77875bb544124c1f34737abcc71b22d/transformed/appcompat-1.7.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:fresco:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/6b5f1636a222d9a98f05cf55cfc329ce/transformed/fresco-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:imagepipeline-okhttp3:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/d87512d33a8267577e09606ad136445f/transformed/imagepipeline-okhttp3-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:drawee:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/03d0c9c024ec75f48fb46bd37a8fb609/transformed/drawee-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:nativeimagefilters:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b9c07b18066fff36b7428c347c8ccfd0/transformed/nativeimagefilters-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:memory-type-native:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/4725d5e1e8ce79db5c5381d9df73d9bd/transformed/memory-type-native-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:memory-type-java:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/dde66d19d8bdad120b7675165beaa86a/transformed/memory-type-java-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:imagepipeline-native:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2ad6f8a205431b010abca2677ba7a9ac/transformed/imagepipeline-native-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:memory-type-ashmem:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/6585ef1ba70170ec525c14fd722cdc96/transformed/memory-type-ashmem-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:imagepipeline:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/315d875cad6368801c9455cf567f6c54/transformed/imagepipeline-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:nativeimagetranscoder:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/013bc201d34cbf7dd0e82ac7e158f6e0/transformed/nativeimagetranscoder-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:imagepipeline-base:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/07cf03e3a0b6dbdd5657d2a4f35550e3/transformed/imagepipeline-base-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:urimod:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b2be80a864c874ac635607f59e4f81dd/transformed/urimod-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:vito-source:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/f9c9c13053ab5b5786d102eacf9cb827/transformed/vito-source-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:middleware:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b14c99973def101eb297f5fa725c2397/transformed/middleware-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:ui-common:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/ce87f7a2f96802fad7ce5250f2ed1601/transformed/ui-common-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.fragment:fragment:1.5.4] /Users/volkan/.gradle/caches/9.0.0/transforms/abc5c9c30eac723cc78b6d5e8a6059c0/transformed/fragment-1.5.4/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.activity:activity:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/a640f47ce80c5c515b84d6f45f9ac578/transformed/activity-1.7.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.autofill:autofill:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/60c45d419f9aea8e3ae08da2029dcd41/transformed/autofill-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/9abe4a99f1693a420cf455cfdff9731c/transformed/swiperefreshlayout-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/192707cf700d19ea5808589710ecafa3/transformed/drawerlayout-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/3ed8ed7413212f40a64bbb7def55b9ad/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/fc9abe745c74a8aeadae1fe0b9006752/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/37eafb236390979594222fa77d65d5fb/transformed/vectordrawable-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [com.facebook.fresco:soloader:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2463a117edfda1d193ee9bc14b68bb7e/transformed/soloader-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.fresco:fbcore:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/c15f34a6bfe1054626eae8a8df0aaaa0/transformed/fbcore-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/90d469933a14ec620a4eb71a0144bf8c/transformed/viewpager-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/22ab738cd78128f4e0d8dee0eca36fea/transformed/customview-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/135ad9defb6d25da3c7186eff8f4e79c/transformed/loader-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core-ktx:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/0cfd61848e12cdd43d9b46aefe0c487c/transformed/core-ktx-1.13.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/ec3c441f4a9c9f1c217fb43e176d0b7c/transformed/lifecycle-viewmodel-2.6.2/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/4ab197f5a2cd97c0572ebc15bb6b0efe/transformed/lifecycle-livedata-core-2.6.2/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/294d456e3ccb2f8e854fd69ff29a6b28/transformed/lifecycle-livedata-2.6.2/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/13709be9bbb4d8e1c3a807cb88172240/transformed/lifecycle-runtime-2.6.2/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/19e9e73e2a38e09850d124caace2bb4c/transformed/lifecycle-viewmodel-savedstate-2.6.2/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/volkan/.gradle/caches/9.0.0/transforms/9714a60833f0aeb3526e3a31af7dde21/transformed/savedstate-1.2.1/AndroidManifest.xml:17:1-22:12
+MERGED from [com.facebook.fresco:ui-core:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/30b9d3191680d83fa130aacd6df6ad80/transformed/ui-core-3.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.react:hermes-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/2b2a34f399e6566a4bc7f9555d03a28a/transformed/hermes-android-0.82.1-debug/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/34096c5e99ddc910722b048fc3dbef43/transformed/startup-runtime-1.1.1/AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/01befaefcee5224a6d5d0e55532f9a48/transformed/tracing-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/49c8a43879c10115bb3ae71e3262288b/transformed/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/a04a1d9673b5768dcfd732656cde4cce/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5c17d801a1525c84bef6098582691ceb/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/volkan/.gradle/caches/9.0.0/transforms/8861a02b14f863bd6f3b28a06febba01/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2caa1187d7b2d1c66a029949d0b3cf28/transformed/annotation-experimental-1.4.0/AndroidManifest.xml:2:1-7:12
+MERGED from [:masterpass-release:] /Users/volkan/.gradle/caches/9.0.0/transforms/0ce9991bf0a27f5e5b6cc9a60d3e6972/transformed/masterpass-release/AndroidManifest.xml:2:1-12:12
+MERGED from [com.facebook.fbjni:fbjni:0.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/5fa135f9220cf0ae1e3ee40cd371125b/transformed/fbjni-0.7.0/AndroidManifest.xml:2:1-7:12
+MERGED from [com.facebook.soloader:soloader:0.12.1] /Users/volkan/.gradle/caches/9.0.0/transforms/88b2f673bf12c20241ec7b7a8e1afbaf/transformed/soloader-0.12.1/AndroidManifest.xml:2:1-17:12
+	package
+		INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+	android:versionName
+		INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+	android:versionCode
+		INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:1:11-69
+uses-permission#android.permission.INTERNET
+ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:3:5-67
+MERGED from [:masterpass-release:] /Users/volkan/.gradle/caches/9.0.0/transforms/0ce9991bf0a27f5e5b6cc9a60d3e6972/transformed/masterpass-release/AndroidManifest.xml:10:5-67
+MERGED from [:masterpass-release:] /Users/volkan/.gradle/caches/9.0.0/transforms/0ce9991bf0a27f5e5b6cc9a60d3e6972/transformed/masterpass-release/AndroidManifest.xml:10:5-67
+	android:name
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:3:22-64
+activity#com.hkmaster.MainActivity
+ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:14:7-25:18
+	android:label
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:16:9-41
+	android:launchMode
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:18:9-40
+	android:windowSoftInputMode
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:19:9-51
+	android:exported
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:20:9-32
+	android:configChanges
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:17:9-118
+	android:name
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:15:9-37
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:21:9-24:25
+action#android.intent.action.MAIN
+ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:22:13-65
+	android:name
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:22:21-62
+category#android.intent.category.LAUNCHER
+ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:23:13-73
+	android:name
+		ADDED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml:23:23-70
+uses-sdk
+INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+MERGED from [:react-native-safe-area-context] /Users/volkan/Desktop/hkmaster/node_modules/react-native-safe-area-context/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:5:5-44
+MERGED from [:react-native-safe-area-context] /Users/volkan/Desktop/hkmaster/node_modules/react-native-safe-area-context/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:10:5-44
+MERGED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:10:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/078adca1e80583023f48431074220559/transformed/appcompat-resources-1.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/078adca1e80583023f48431074220559/transformed/appcompat-resources-1.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/e77875bb544124c1f34737abcc71b22d/transformed/appcompat-1.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/e77875bb544124c1f34737abcc71b22d/transformed/appcompat-1.7.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:fresco:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/6b5f1636a222d9a98f05cf55cfc329ce/transformed/fresco-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:fresco:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/6b5f1636a222d9a98f05cf55cfc329ce/transformed/fresco-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:imagepipeline-okhttp3:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/d87512d33a8267577e09606ad136445f/transformed/imagepipeline-okhttp3-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:imagepipeline-okhttp3:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/d87512d33a8267577e09606ad136445f/transformed/imagepipeline-okhttp3-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:drawee:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/03d0c9c024ec75f48fb46bd37a8fb609/transformed/drawee-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:drawee:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/03d0c9c024ec75f48fb46bd37a8fb609/transformed/drawee-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:nativeimagefilters:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b9c07b18066fff36b7428c347c8ccfd0/transformed/nativeimagefilters-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:nativeimagefilters:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b9c07b18066fff36b7428c347c8ccfd0/transformed/nativeimagefilters-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:memory-type-native:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/4725d5e1e8ce79db5c5381d9df73d9bd/transformed/memory-type-native-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:memory-type-native:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/4725d5e1e8ce79db5c5381d9df73d9bd/transformed/memory-type-native-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:memory-type-java:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/dde66d19d8bdad120b7675165beaa86a/transformed/memory-type-java-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:memory-type-java:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/dde66d19d8bdad120b7675165beaa86a/transformed/memory-type-java-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:imagepipeline-native:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2ad6f8a205431b010abca2677ba7a9ac/transformed/imagepipeline-native-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:imagepipeline-native:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2ad6f8a205431b010abca2677ba7a9ac/transformed/imagepipeline-native-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:memory-type-ashmem:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/6585ef1ba70170ec525c14fd722cdc96/transformed/memory-type-ashmem-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:memory-type-ashmem:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/6585ef1ba70170ec525c14fd722cdc96/transformed/memory-type-ashmem-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:imagepipeline:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/315d875cad6368801c9455cf567f6c54/transformed/imagepipeline-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:imagepipeline:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/315d875cad6368801c9455cf567f6c54/transformed/imagepipeline-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:nativeimagetranscoder:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/013bc201d34cbf7dd0e82ac7e158f6e0/transformed/nativeimagetranscoder-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:nativeimagetranscoder:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/013bc201d34cbf7dd0e82ac7e158f6e0/transformed/nativeimagetranscoder-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:imagepipeline-base:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/07cf03e3a0b6dbdd5657d2a4f35550e3/transformed/imagepipeline-base-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:imagepipeline-base:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/07cf03e3a0b6dbdd5657d2a4f35550e3/transformed/imagepipeline-base-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:urimod:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b2be80a864c874ac635607f59e4f81dd/transformed/urimod-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:urimod:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b2be80a864c874ac635607f59e4f81dd/transformed/urimod-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:vito-source:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/f9c9c13053ab5b5786d102eacf9cb827/transformed/vito-source-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:vito-source:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/f9c9c13053ab5b5786d102eacf9cb827/transformed/vito-source-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:middleware:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b14c99973def101eb297f5fa725c2397/transformed/middleware-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:middleware:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/b14c99973def101eb297f5fa725c2397/transformed/middleware-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:ui-common:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/ce87f7a2f96802fad7ce5250f2ed1601/transformed/ui-common-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:ui-common:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/ce87f7a2f96802fad7ce5250f2ed1601/transformed/ui-common-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment:1.5.4] /Users/volkan/.gradle/caches/9.0.0/transforms/abc5c9c30eac723cc78b6d5e8a6059c0/transformed/fragment-1.5.4/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.5.4] /Users/volkan/.gradle/caches/9.0.0/transforms/abc5c9c30eac723cc78b6d5e8a6059c0/transformed/fragment-1.5.4/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/a640f47ce80c5c515b84d6f45f9ac578/transformed/activity-1.7.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/a640f47ce80c5c515b84d6f45f9ac578/transformed/activity-1.7.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.autofill:autofill:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/60c45d419f9aea8e3ae08da2029dcd41/transformed/autofill-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.autofill:autofill:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/60c45d419f9aea8e3ae08da2029dcd41/transformed/autofill-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/9abe4a99f1693a420cf455cfdff9731c/transformed/swiperefreshlayout-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/9abe4a99f1693a420cf455cfdff9731c/transformed/swiperefreshlayout-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/192707cf700d19ea5808589710ecafa3/transformed/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/192707cf700d19ea5808589710ecafa3/transformed/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/3ed8ed7413212f40a64bbb7def55b9ad/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/3ed8ed7413212f40a64bbb7def55b9ad/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:21:5-44
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/fc9abe745c74a8aeadae1fe0b9006752/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/fc9abe745c74a8aeadae1fe0b9006752/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/37eafb236390979594222fa77d65d5fb/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/37eafb236390979594222fa77d65d5fb/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [com.facebook.fresco:soloader:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2463a117edfda1d193ee9bc14b68bb7e/transformed/soloader-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:soloader:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2463a117edfda1d193ee9bc14b68bb7e/transformed/soloader-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:fbcore:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/c15f34a6bfe1054626eae8a8df0aaaa0/transformed/fbcore-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:fbcore:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/c15f34a6bfe1054626eae8a8df0aaaa0/transformed/fbcore-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/90d469933a14ec620a4eb71a0144bf8c/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/90d469933a14ec620a4eb71a0144bf8c/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/22ab738cd78128f4e0d8dee0eca36fea/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/22ab738cd78128f4e0d8dee0eca36fea/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/135ad9defb6d25da3c7186eff8f4e79c/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/135ad9defb6d25da3c7186eff8f4e79c/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core-ktx:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/0cfd61848e12cdd43d9b46aefe0c487c/transformed/core-ktx-1.13.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/0cfd61848e12cdd43d9b46aefe0c487c/transformed/core-ktx-1.13.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/ec3c441f4a9c9f1c217fb43e176d0b7c/transformed/lifecycle-viewmodel-2.6.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/ec3c441f4a9c9f1c217fb43e176d0b7c/transformed/lifecycle-viewmodel-2.6.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/4ab197f5a2cd97c0572ebc15bb6b0efe/transformed/lifecycle-livedata-core-2.6.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/4ab197f5a2cd97c0572ebc15bb6b0efe/transformed/lifecycle-livedata-core-2.6.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/294d456e3ccb2f8e854fd69ff29a6b28/transformed/lifecycle-livedata-2.6.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/294d456e3ccb2f8e854fd69ff29a6b28/transformed/lifecycle-livedata-2.6.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/13709be9bbb4d8e1c3a807cb88172240/transformed/lifecycle-runtime-2.6.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/13709be9bbb4d8e1c3a807cb88172240/transformed/lifecycle-runtime-2.6.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/19e9e73e2a38e09850d124caace2bb4c/transformed/lifecycle-viewmodel-savedstate-2.6.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/19e9e73e2a38e09850d124caace2bb4c/transformed/lifecycle-viewmodel-savedstate-2.6.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/volkan/.gradle/caches/9.0.0/transforms/9714a60833f0aeb3526e3a31af7dde21/transformed/savedstate-1.2.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/volkan/.gradle/caches/9.0.0/transforms/9714a60833f0aeb3526e3a31af7dde21/transformed/savedstate-1.2.1/AndroidManifest.xml:20:5-44
+MERGED from [com.facebook.fresco:ui-core:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/30b9d3191680d83fa130aacd6df6ad80/transformed/ui-core-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fresco:ui-core:3.6.0] /Users/volkan/.gradle/caches/9.0.0/transforms/30b9d3191680d83fa130aacd6df6ad80/transformed/ui-core-3.6.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.react:hermes-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/2b2a34f399e6566a4bc7f9555d03a28a/transformed/hermes-android-0.82.1-debug/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.react:hermes-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/2b2a34f399e6566a4bc7f9555d03a28a/transformed/hermes-android-0.82.1-debug/AndroidManifest.xml:5:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/34096c5e99ddc910722b048fc3dbef43/transformed/startup-runtime-1.1.1/AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/34096c5e99ddc910722b048fc3dbef43/transformed/startup-runtime-1.1.1/AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/01befaefcee5224a6d5d0e55532f9a48/transformed/tracing-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.tracing:tracing:1.1.0] /Users/volkan/.gradle/caches/9.0.0/transforms/01befaefcee5224a6d5d0e55532f9a48/transformed/tracing-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/49c8a43879c10115bb3ae71e3262288b/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/49c8a43879c10115bb3ae71e3262288b/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/a04a1d9673b5768dcfd732656cde4cce/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/volkan/.gradle/caches/9.0.0/transforms/a04a1d9673b5768dcfd732656cde4cce/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5c17d801a1525c84bef6098582691ceb/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5c17d801a1525c84bef6098582691ceb/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/volkan/.gradle/caches/9.0.0/transforms/8861a02b14f863bd6f3b28a06febba01/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/volkan/.gradle/caches/9.0.0/transforms/8861a02b14f863bd6f3b28a06febba01/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2caa1187d7b2d1c66a029949d0b3cf28/transformed/annotation-experimental-1.4.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] /Users/volkan/.gradle/caches/9.0.0/transforms/2caa1187d7b2d1c66a029949d0b3cf28/transformed/annotation-experimental-1.4.0/AndroidManifest.xml:5:5-44
+MERGED from [:masterpass-release:] /Users/volkan/.gradle/caches/9.0.0/transforms/0ce9991bf0a27f5e5b6cc9a60d3e6972/transformed/masterpass-release/AndroidManifest.xml:5:5-7:41
+MERGED from [:masterpass-release:] /Users/volkan/.gradle/caches/9.0.0/transforms/0ce9991bf0a27f5e5b6cc9a60d3e6972/transformed/masterpass-release/AndroidManifest.xml:5:5-7:41
+MERGED from [com.facebook.fbjni:fbjni:0.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/5fa135f9220cf0ae1e3ee40cd371125b/transformed/fbjni-0.7.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.fbjni:fbjni:0.7.0] /Users/volkan/.gradle/caches/9.0.0/transforms/5fa135f9220cf0ae1e3ee40cd371125b/transformed/fbjni-0.7.0/AndroidManifest.xml:5:5-44
+MERGED from [com.facebook.soloader:soloader:0.12.1] /Users/volkan/.gradle/caches/9.0.0/transforms/88b2f673bf12c20241ec7b7a8e1afbaf/transformed/soloader-0.12.1/AndroidManifest.xml:7:5-9:41
+MERGED from [com.facebook.soloader:soloader:0.12.1] /Users/volkan/.gradle/caches/9.0.0/transforms/88b2f673bf12c20241ec7b7a8e1afbaf/transformed/soloader-0.12.1/AndroidManifest.xml:7:5-9:41
+	android:targetSdkVersion
+		INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/volkan/Desktop/hkmaster/android/app/src/main/AndroidManifest.xml
+uses-permission#android.permission.SYSTEM_ALERT_WINDOW
+ADDED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:16:5-78
+	android:name
+		ADDED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:16:22-75
+activity#com.facebook.react.devsupport.DevSettingsActivity
+ADDED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:19:9-21:40
+	android:exported
+		ADDED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:21:13-37
+	android:name
+		ADDED from [com.facebook.react:react-android:0.82.1] /Users/volkan/.gradle/caches/9.0.0/transforms/1e84847373c8b60ddb3f088099977c2a/transformed/react-android-0.82.1-debug/AndroidManifest.xml:20:13-77
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/34096c5e99ddc910722b048fc3dbef43/transformed/startup-runtime-1.1.1/AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/volkan/.gradle/caches/9.0.0/transforms/34096c5e99ddc910722b048fc3dbef43/transformed/startup-runtime-1.1.1/AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/volkan/.gradle/caches/9.0.0/transforms/bd6fcbe596ba2758f850f0f4e3527572/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+permission#com.hkmaster.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+uses-permission#com.hkmaster.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.13.1] /Users/volkan/.gradle/caches/9.0.0/transforms/5b2bb13551ed57ab82eaefe62a3c339f/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] /Users/volkan/.gradle/caches/9.0.0/transforms/9fa1d417ba5e6e47529251d40053c0a6/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/volkan/.gradle/caches/9.0.0/transforms/a949046c50ff101ed82c491188b218a7/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [:masterpass-release:] /Users/volkan/.gradle/caches/9.0.0/transforms/0ce9991bf0a27f5e5b6cc9a60d3e6972/transformed/masterpass-release/AndroidManifest.xml:9:5-79
+	android:name
+		ADDED from [:masterpass-release:] /Users/volkan/.gradle/caches/9.0.0/transforms/0ce9991bf0a27f5e5b6cc9a60d3e6972/transformed/masterpass-release/AndroidManifest.xml:9:22-76
+meta-data#com.facebook.soloader.enabled
+ADDED from [com.facebook.soloader:soloader:0.12.1] /Users/volkan/.gradle/caches/9.0.0/transforms/88b2f673bf12c20241ec7b7a8e1afbaf/transformed/soloader-0.12.1/AndroidManifest.xml:12:9-14:37
+	android:value
+		ADDED from [com.facebook.soloader:soloader:0.12.1] /Users/volkan/.gradle/caches/9.0.0/transforms/88b2f673bf12c20241ec7b7a8e1afbaf/transformed/soloader-0.12.1/AndroidManifest.xml:14:13-34
+	android:name
+		ADDED from [com.facebook.soloader:soloader:0.12.1] /Users/volkan/.gradle/caches/9.0.0/transforms/88b2f673bf12c20241ec7b7a8e1afbaf/transformed/soloader-0.12.1/AndroidManifest.xml:13:13-57

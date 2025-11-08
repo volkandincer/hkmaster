@@ -343,6 +343,31 @@ export const MasterpassTestScreen: React.FC = () => {
     }
   }, []);
 
+  const handleStart3DValidation = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      // Generate random values for each call
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomReturnURL = `https://example.com/return?token=${generateRandomString(12)}`;
+
+      const result = await MasterpassService.start3DValidation(
+        randomJToken,
+        randomReturnURL,
+      );
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleClear = useCallback(() => {
     setResponse(null);
     setError(null);
@@ -425,6 +450,13 @@ export const MasterpassTestScreen: React.FC = () => {
           <MasterpassButton
             title="Resend OTP"
             onPress={handleResendOtp}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Start 3D Validation"
+            onPress={handleStart3DValidation}
             loading={loading}
             disabled={loading}
           />

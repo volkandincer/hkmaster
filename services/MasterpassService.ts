@@ -402,6 +402,42 @@ class MasterpassService {
       throw new Error(`Masterpass resendOtp failed: ${errorMessage}`);
     }
   }
+
+  /**
+   * Start 3D Validation in Masterpass
+   */
+  async start3DValidation(
+    jToken: string,
+    returnURL?: string,
+  ): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      // Validate jToken
+      if (!jToken || jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      // Validate returnURL - SDK requires a valid URL, not empty string
+      // Even though documentation says it's optional, SDK throws error if empty
+      if (!returnURL || returnURL.trim().length === 0) {
+        throw new Error('returnURL is required for 3D Validation');
+      }
+
+      const response = await MasterpassModule.start3DValidation(
+        jToken,
+        returnURL,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass start3DValidation failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default new MasterpassService();
