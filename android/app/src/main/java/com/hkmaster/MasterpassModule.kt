@@ -1505,17 +1505,189 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun payment(params: ReadableMap, promise: Promise) {
     try {
+      val mp = getMasterPassInstance()
+      
+      // Extract parameters from ReadableMap
       val jToken = params.getString("jToken") ?: throw IllegalArgumentException("jToken is required")
+      val accountKey = params.getString("accountKey")
       val amount = params.getString("amount")
       val orderNo = params.getString("orderNo")
+      val cardAlias = params.getString("cardAlias")
+      val currencyCode = params.getString("currencyCode")
+      val installmentCount = if (params.hasKey("installmentCount") && !params.isNull("installmentCount")) {
+        params.getInt("installmentCount")
+      } else {
+        0
+      }
+      val requestReferenceNo = params.getString("requestReferenceNo")
+      val acquirerIcaNumber = params.getString("acquirerIcaNumber")
+      val authenticationMethod = params.getString("authenticationMethod")
+      val cvv = params.getString("cvv")
       
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Payment - Bridge working")
-      result.putString("jToken", jToken)
-      result.putString("amount", amount)
-      result.putString("orderNo", orderNo)
-      promise.resolve(result)
+      // Get current activity for context
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod?.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      // Create MPText for CVV (required by SDK)
+      val cvvMPText = MPText(activity)
+      if (cvv != null && cvv.isNotEmpty()) {
+        cvvMPText.setText(cvv)
+      }
+      
+      // Call SDK paymentRequest method
+      // Android SDK signature: paymentRequest(jToken, accountKey?, acquirerIcaNumber?, amount, authenticationMethod, cardAlias?, currencyCode?, installmentCount?, orderNo?, requestReferenceNo?, cvv: MPText, paymentListener)
+      mp.paymentRequest(
+        jToken = jToken,
+        accountKey = accountKey,
+        acquirerIcaNumber = acquirerIcaNumber,
+        amount = amount,
+        authenticationMethod = authTypeEnum,
+        cardAlias = cardAlias,
+        currencyCode = currencyCode,
+        installmentCount = if (installmentCount > 0) installmentCount else null,
+        orderNo = orderNo,
+        requestReferenceNo = requestReferenceNo,
+        cvv = cvvMPText,
+        paymentListener = object : PaymentResponseListener {
+          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+            try {
+              // Check if response has exception - even in onSuccess, SDK might return exception
+              if (response.exception != null) {
+                val errorMap = Arguments.createMap()
+                errorMap.putInt("statusCode", response.statusCode ?: 500)
+                errorMap.putString("message", response.message ?: "Payment failed")
+                
+                if (response.buildId != null) {
+                  errorMap.putString("buildId", response.buildId)
+                } else {
+                  errorMap.putNull("buildId")
+                }
+                
+                if (response.version != null) {
+                  errorMap.putString("version", response.version)
+                } else {
+                  errorMap.putNull("version")
+                }
+                
+                if (response.correlationId != null) {
+                  errorMap.putString("correlationId", response.correlationId)
+                } else {
+                  errorMap.putNull("correlationId")
+                }
+                
+                if (response.requestId != null) {
+                  errorMap.putString("requestId", response.requestId)
+                } else {
+                  errorMap.putNull("requestId")
+                }
+                
+                val exceptionMap = Arguments.createMap()
+                exceptionMap.putString("level", response.exception?.level ?: "")
+                exceptionMap.putString("code", response.exception?.code ?: "")
+                exceptionMap.putString("message", response.exception?.message ?: "")
+                errorMap.putMap("exception", exceptionMap)
+                
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Payment failed with exception", null)
+                return
+              }
+              
+              val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Payment successful")
+              
+              // Handle nullable strings properly
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle PaymentResponse result
+              val resultObj = response.result
+              if (resultObj is com.paycore.masterpass.models.payment.PaymentResponse) {
+                val paymentResult = Arguments.createMap()
+                
+                // Map PaymentResponse fields if available
+                // PaymentResponse may contain transaction details, 3D Secure URL, etc.
+                // Note: Field names may vary - check SDK documentation for exact field names
+                paymentResult.putString("status", "success")
+                
+                // Try to map common fields (may need adjustment based on actual SDK structure)
+                try {
+                  // Use reflection or check actual field names from SDK
+                  paymentResult.putString("data", resultObj.toString())
+                } catch (e: Exception) {
+                  // If field access fails, just mark as success
+                }
+                
+                result.putMap("result", paymentResult)
+              } else if (resultObj != null) {
+                // Fallback: if result is not PaymentResponse, wrap it in result object
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                // If result is null, put null in result field
+                result.putNull("result")
+              }
+              
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+            try {
+              // Send complete error information including all ServiceError fields
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Payment failed")
+              
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              if (!error.mdStatus.isNullOrBlank()) {
+                errorMessage.append(" [MD Status: ${error.mdStatus}]")
+              }
+              if (!error.mdErrorMsg.isNullOrBlank()) {
+                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              }
+              
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Payment failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }

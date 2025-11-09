@@ -368,6 +368,47 @@ export const MasterpassTestScreen: React.FC = () => {
     }
   }, []);
 
+  const handlePayment = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      // Generate random values for each call
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomCardAlias = `card-${generateRandomString(8)}`;
+      const randomAmount = (generateRandomNumber(10, 1000) * 100).toString(); // Amount in cents/kuruş
+      const randomOrderNo = `order-${generateRandomString(10)}`;
+      const randomRRN = generateRandomRRN();
+      const randomCVV = generateRandomCVV();
+      const currencyCode = 'TRY'; // Turkish Lira
+      const paymentType = 'normal'; // Default payment type
+      const authenticationMethod = 'SMS_OTP'; // Default auth method
+
+      const result = await MasterpassService.payment({
+        jToken: randomJToken,
+        accountKey: randomAccountKey,
+        cardAlias: randomCardAlias,
+        amount: randomAmount,
+        orderNo: randomOrderNo,
+        rrn: randomRRN,
+        cvv: randomCVV,
+        currencyCode: currencyCode,
+        paymentType: paymentType,
+        authenticationMethod: authenticationMethod,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleClear = useCallback(() => {
     setResponse(null);
     setError(null);
@@ -457,6 +498,13 @@ export const MasterpassTestScreen: React.FC = () => {
           <MasterpassButton
             title="Start 3D Validation"
             onPress={handleStart3DValidation}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Payment"
+            onPress={handlePayment}
             loading={loading}
             disabled={loading}
           />

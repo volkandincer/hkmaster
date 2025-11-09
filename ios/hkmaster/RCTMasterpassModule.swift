@@ -1117,7 +1117,205 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Payment
   
   @objc func payment(_ params: NSDictionary, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Payment - Not implemented yet"])
+    // Extract required parameters from NSDictionary
+    guard let jToken = params["jToken"] as? String else {
+      rejecter("ERROR", "jToken is required", nil)
+      return
+    }
+    
+    guard let accountKey = params["accountKey"] as? String else {
+      rejecter("ERROR", "accountKey is required", nil)
+      return
+    }
+    
+    guard let cardAlias = params["cardAlias"] as? String else {
+      rejecter("ERROR", "cardAlias is required", nil)
+      return
+    }
+    
+    guard let amount = params["amount"] as? String else {
+      rejecter("ERROR", "amount is required", nil)
+      return
+    }
+    
+    guard let orderNo = params["orderNo"] as? String else {
+      rejecter("ERROR", "orderNo is required", nil)
+      return
+    }
+    
+    guard let rrn = params["rrn"] as? String else {
+      rejecter("ERROR", "rrn is required", nil)
+      return
+    }
+    
+    guard let cvv = params["cvv"] as? String else {
+      rejecter("ERROR", "cvv is required", nil)
+      return
+    }
+    
+    guard let currencyCodeStr = params["currencyCode"] as? String else {
+      rejecter("ERROR", "currencyCode is required", nil)
+      return
+    }
+    
+    guard let paymentTypeStr = params["paymentType"] as? String else {
+      rejecter("ERROR", "paymentType is required", nil)
+      return
+    }
+    
+    guard let authenticationMethod = params["authenticationMethod"] as? String else {
+      rejecter("ERROR", "authenticationMethod is required", nil)
+      return
+    }
+    
+    // Optional parameters
+    let acquirerIcaNumber = params["acquirerIcaNumber"] as? String
+    let installmentCount = params["installmentCount"] as? Int ?? 0
+    let secure3DModelStr = params["secure3DModel"] as? String
+    
+    // Convert currencyCode to enum
+    var currencyCodeEnum: MPCurrencyCode = .TRY // Default value
+    if let found = MPCurrencyCode.allCases.first(where: { $0.rawValue.lowercased() == currencyCodeStr.lowercased() }) {
+      currencyCodeEnum = found
+    }
+    
+    // Convert paymentType to enum
+    // PaymentType enum needs to be checked from SDK
+    // Try to find matching enum value, or use first available value as default
+    var paymentTypeEnum: PaymentType
+    if let found = PaymentType.allCases.first(where: { $0.rawValue.lowercased() == paymentTypeStr.lowercased() }) {
+      paymentTypeEnum = found
+    } else {
+      // Use first available value as default
+      paymentTypeEnum = PaymentType.allCases.first ?? PaymentType.allCases[0]
+    }
+    
+    // Convert authenticationMethod to enum
+    var authTypeEnum: AuthType
+    if let found = AuthType.allCases.first(where: { $0.rawValue.lowercased() == authenticationMethod.lowercased() }) {
+      authTypeEnum = found
+    } else {
+      // Use first available value as default
+      authTypeEnum = AuthType.allCases.first ?? AuthType.allCases[0]
+    }
+    
+    // Convert secure3DModel to SecurityType enum if provided
+    var secure3DModelEnum: SecurityType? = nil
+    if let secure3D = secure3DModelStr {
+      // SecurityType enum needs to be checked from SDK
+      // For now, set to nil
+    }
+    
+    // Define completion handler outside of DispatchQueue closure to avoid syntax issues
+    let completionHandler: (ServiceError?, MPResponse<PaymentResponse>?) -> Void = { (error: ServiceError?, response: MPResponse<PaymentResponse>?) in
+      if let error = error {
+        // Handle error
+        var errorMessage = error.responseDesc ?? "Payment failed"
+        if let responseCode = error.responseCode {
+          errorMessage += " (Code: \(responseCode))"
+        }
+        if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
+          errorMessage += " [MD Status: \(mdStatus)]"
+        }
+        if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
+          errorMessage += " [MD Error: \(mdErrorMsg)]"
+        }
+        rejecter("ERROR", errorMessage, nil)
+      } else if let response = response {
+        // Handle success response
+        var responseDict: [String: Any] = [:]
+        
+        // MPResponse fields - buildId, statusCode, message are non-optional
+        responseDict["statusCode"] = response.statusCode
+        responseDict["message"] = response.message
+        responseDict["buildId"] = response.buildId
+        
+        // Optional fields
+        if let version = response.version {
+          responseDict["version"] = version
+        } else {
+          responseDict["version"] = NSNull()
+        }
+        
+        if let correlationId = response.correlationId {
+          responseDict["correlationId"] = correlationId
+        } else {
+          responseDict["correlationId"] = NSNull()
+        }
+        
+        if let requestId = response.requestId {
+          responseDict["requestId"] = requestId
+        } else {
+          responseDict["requestId"] = NSNull()
+        }
+        
+        // Check for exception
+        if let exception = response.exception {
+          var exceptionDict: [String: Any] = [:]
+          exceptionDict["level"] = exception.level
+          exceptionDict["code"] = exception.code
+          exceptionDict["message"] = exception.message
+          responseDict["exception"] = exceptionDict
+          rejecter("ERROR", exception.message, nil)
+          return
+        }
+        
+        // Handle result - PaymentResponse
+        if let resultObj = response.result {
+          var resultDict: [String: Any] = [:]
+          // PaymentResponse may contain transaction details, 3D Secure URL, etc.
+          resultDict["status"] = "success"
+          responseDict["result"] = resultDict
+        } else {
+          responseDict["result"] = NSNull()
+        }
+        
+        resolver(responseDict)
+      } else {
+        rejecter("ERROR", "Payment failed: No response received", nil)
+      }
+    }
+    
+    // Create MPText for CVV on main thread (required by SDK)
+    // MPText is a UIView subclass, so it must be created on main thread
+    let workItem = DispatchWorkItem {
+      let cvvMPText = MPText()
+      cvvMPText.type = .cvv
+      cvvMPText.text = cvv
+      
+      // Call SDK payment method with completion handler
+      // iOS SDK actual signature: payment(_ jToken: String, _ rrn: String?, _ cvv: MPText?, _ cardAlias: String?, _ accountKey: String?, _ amount: String?, _ orderNo: String?, _ currencyCode: MPCurrencyCode?, _ paymentType: PaymentType?, _ acquirerIcaNumber: String?, _ installmentCount: Int?, _ subMerchant: SubMerchant?, _ rewardList: [Reward]?, _ orderDetails: OrderDetails?, _ authenticationMethod: AuthType?, _ orderProductDetails: OrderProductDetails?, _ buyerDetails: BuyerDetails?, _ billDetails: BillDetails?, _ deliveryDetails: DeliveryDetails?, _ otherDetails: OtherDetails?, _ secure3DModel: SecurityType?, _ terminal: Terminal?, _ mokaSubDealerDetails: MokaSubDealerDetails?, _ customParameters: CustomParameters?, _ additionalParams: [String : String]?, _ completion: @escaping (ServiceError?, MPResponse<PaymentResponse>?) -> Void)
+      // All parameters are positional (no labels) and in specific order
+      MasterPass.payment(
+        jToken,
+        rrn,
+        cvvMPText,
+        cardAlias,
+        accountKey,
+        amount,
+        orderNo,
+        currencyCodeEnum,
+        paymentTypeEnum,
+        acquirerIcaNumber,
+        installmentCount > 0 ? installmentCount : nil,
+        nil, // subMerchant
+        nil, // rewardList
+        nil, // orderDetails
+        authTypeEnum,
+        nil, // orderProductDetails (note: singular, not plural)
+        nil, // buyerDetails
+        nil, // billDetails
+        nil, // deliveryDetails
+        nil, // otherDetails
+        secure3DModelEnum,
+        nil, // terminal
+        nil, // mokaSubDealerDetails
+        nil, // customParameters
+        nil, // additionalParams
+        completionHandler
+      )
+    }
+    DispatchQueue.main.async(execute: workItem)
   }
   
   // MARK: - Direct Payment

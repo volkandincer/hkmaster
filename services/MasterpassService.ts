@@ -438,6 +438,90 @@ class MasterpassService {
       throw new Error(`Masterpass start3DValidation failed: ${errorMessage}`);
     }
   }
+
+  /**
+   * Payment Request
+   */
+  async payment(params: {
+    jToken: string;
+    accountKey?: string;
+    cardAlias?: string;
+    amount?: string;
+    orderNo?: string;
+    rrn?: string;
+    cvv?: string;
+    currencyCode?: string;
+    paymentType?: string;
+    acquirerIcaNumber?: string;
+    installmentCount?: number;
+    authenticationMethod?: string;
+    secure3DModel?: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      // Validate jToken
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      // Validate required fields for iOS (Android may have different requirements)
+      if (!params.accountKey || params.accountKey.trim().length === 0) {
+        throw new Error('accountKey is required');
+      }
+      if (!params.cardAlias || params.cardAlias.trim().length === 0) {
+        throw new Error('cardAlias is required');
+      }
+      if (!params.amount || params.amount.trim().length === 0) {
+        throw new Error('amount is required');
+      }
+      if (!params.orderNo || params.orderNo.trim().length === 0) {
+        throw new Error('orderNo is required');
+      }
+      if (!params.rrn || params.rrn.trim().length === 0) {
+        throw new Error('rrn is required');
+      }
+      if (!params.cvv || params.cvv.trim().length === 0) {
+        throw new Error('cvv is required');
+      }
+      if (!params.currencyCode || params.currencyCode.trim().length === 0) {
+        throw new Error('currencyCode is required');
+      }
+      if (!params.paymentType || params.paymentType.trim().length === 0) {
+        throw new Error('paymentType is required');
+      }
+      if (
+        !params.authenticationMethod ||
+        params.authenticationMethod.trim().length === 0
+      ) {
+        throw new Error('authenticationMethod is required');
+      }
+
+      const response = await MasterpassModule.payment({
+        jToken: params.jToken,
+        accountKey: params.accountKey,
+        cardAlias: params.cardAlias,
+        amount: params.amount,
+        orderNo: params.orderNo,
+        rrn: params.rrn,
+        cvv: params.cvv,
+        currencyCode: params.currencyCode,
+        paymentType: params.paymentType,
+        acquirerIcaNumber: params.acquirerIcaNumber || null,
+        installmentCount: params.installmentCount || 0,
+        authenticationMethod: params.authenticationMethod,
+        secure3DModel: params.secure3DModel || null,
+      });
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass payment failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default new MasterpassService();
