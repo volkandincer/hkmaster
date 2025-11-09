@@ -137,145 +137,149 @@ class RCTMasterpassModule: RCTEventEmitter {
       }
     }
     
-    // Create MPText instances for card number and CVV
+    // Create MPText instances for card number and CVV on main thread
+    // MPText is a UIView subclass, so it must be created on main thread
     // SDK requires MPText type to be set correctly (cardNo for card number, cvv for CVV)
     // TypeScript already validates and formats the values, so we just create MPText and set values
-    let cardNoMPText = MPText()
-    cardNoMPText.type = .cardNo
-    cardNoMPText.text = cardNumber
-    
-    let cvvMPText = MPText()
-    cvvMPText.type = .cvv
-    cvvMPText.text = cvv
-    
-    // Create MPCheckboxStateProvider and set it to checked (required by SDK)
-    // SDK requires terms and conditions checkbox to be selected
-    let checkboxProvider = MPCheckboxStateProvider()
-    checkboxProvider.checkStateAction(to: true)
-    
-    // Create MPCard with correct iOS SDK signature
-    // Signature: init(_ cardNo: MPText, _ cardHolder: String?, _ cvv: MPText?, _ date: String, _ checkbox: MPCheckboxStateProvider? = nil)
-    let mpCard = MPCard(
-      cardNoMPText,
-      cardHolderName,
-      cvvMPText,
-      expiryDate,
-      checkboxProvider // checkbox is required - SDK validates terms and conditions
-    )
-    
-    // Call SDK addCard method with completion handler
-    // Signature: addCard(_:accountKey:accountKeyType:rrn:userId:card:cardAlias:isMsisdnValidatedByMerchant:authenticationMethod:_:_:)
-    MasterPass.addCard(
-      jToken,
-      accountKey: accountKey ?? "",
-      accountKeyType: accountKeyTypeEnum,
-      rrn: rrn ?? "",
-      userId: userId ?? "",
-      card: mpCard,
-      cardAlias: cardAlias ?? "",
-      isMsisdnValidatedByMerchant: isMsisdnValidatedByMerchant?.boolValue ?? false,
-      authenticationMethod: authType,
-      additionalParamsDict,
-      { (error: ServiceError?, result: MPResponse<GeneralResponseWith3D>?) in
-        if let error = error {
-          // Handle error
-          var errorMessage = error.responseDesc ?? "Add Card failed"
-          if let responseCode = error.responseCode {
-            errorMessage += " (Code: \(responseCode))"
-          }
-          if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
-            errorMessage += " [MD Status: \(mdStatus)]"
-          }
-          if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
-            errorMessage += " [MD Error: \(mdErrorMsg)]"
-          }
-          rejecter("ERROR", errorMessage, nil)
-        } else if let response = result {
-          // Handle success response
-          var responseDict: [String: Any] = [:]
-          
-          // MPResponse fields - buildId, statusCode, message are non-optional
-          responseDict["statusCode"] = response.statusCode
-          responseDict["message"] = response.message
-          responseDict["buildId"] = response.buildId
-          
-          // Optional fields
-          if let version = response.version {
-            responseDict["version"] = version
-          } else {
-            responseDict["version"] = NSNull()
-          }
-          
-          if let correlationId = response.correlationId {
-            responseDict["correlationId"] = correlationId
-          } else {
-            responseDict["correlationId"] = NSNull()
-          }
-          
-          if let requestId = response.requestId {
-            responseDict["requestId"] = requestId
-          } else {
-            responseDict["requestId"] = NSNull()
-          }
-          
-          // Check for exception
-          if let exception = response.exception {
-            var exceptionDict: [String: Any] = [:]
-            // ExceptionResponse fields are non-optional
-            exceptionDict["level"] = exception.level
-            exceptionDict["code"] = exception.code
-            exceptionDict["message"] = exception.message
-            responseDict["exception"] = exceptionDict
-            rejecter("ERROR", exception.message, nil)
-            return
-          }
-          
-          // Handle result - GeneralResponseWith3D
-          if let resultObj = response.result {
-            var resultDict: [String: Any] = [:]
-            resultDict["token"] = resultObj.token
-            resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber
-            resultDict["responseCode"] = resultObj.responseCode
-            resultDict["resultDescription"] = resultObj.resultDescription
-            // iOS uses resultDescription, Android uses description - add both for consistency
-            resultDict["description"] = resultObj.resultDescription
+    let workItem = DispatchWorkItem {
+      let cardNoMPText = MPText()
+      cardNoMPText.type = .cardNo
+      cardNoMPText.text = cardNumber
+      
+      let cvvMPText = MPText()
+      cvvMPText.type = .cvv
+      cvvMPText.text = cvv
+      
+      // Create MPCheckboxStateProvider and set it to checked (required by SDK)
+      // SDK requires terms and conditions checkbox to be selected
+      let checkboxProvider = MPCheckboxStateProvider()
+      checkboxProvider.checkStateAction(to: true)
+      
+      // Create MPCard with correct iOS SDK signature
+      // Signature: init(_ cardNo: MPText, _ cardHolder: String?, _ cvv: MPText?, _ date: String, _ checkbox: MPCheckboxStateProvider? = nil)
+      let mpCard = MPCard(
+        cardNoMPText,
+        cardHolderName,
+        cvvMPText,
+        expiryDate,
+        checkboxProvider // checkbox is required - SDK validates terms and conditions
+      )
+      
+      // Call SDK addCard method with completion handler
+      // Signature: addCard(_:accountKey:accountKeyType:rrn:userId:card:cardAlias:isMsisdnValidatedByMerchant:authenticationMethod:_:_:)
+      MasterPass.addCard(
+        jToken,
+        accountKey: accountKey ?? "",
+        accountKeyType: accountKeyTypeEnum,
+        rrn: rrn ?? "",
+        userId: userId ?? "",
+        card: mpCard,
+        cardAlias: cardAlias ?? "",
+        isMsisdnValidatedByMerchant: isMsisdnValidatedByMerchant?.boolValue ?? false,
+        authenticationMethod: authType,
+        additionalParamsDict,
+        { (error: ServiceError?, result: MPResponse<GeneralResponseWith3D>?) in
+          if let error = error {
+            // Handle error
+            var errorMessage = error.responseDesc ?? "Add Card failed"
+            if let responseCode = error.responseCode {
+              errorMessage += " (Code: \(responseCode))"
+            }
+            if let mdStatus = error.mdStatus, !mdStatus.isEmpty {
+              errorMessage += " [MD Status: \(mdStatus)]"
+            }
+            if let mdErrorMsg = error.mdErrorMsg, !mdErrorMsg.isEmpty {
+              errorMessage += " [MD Error: \(mdErrorMsg)]"
+            }
+            rejecter("ERROR", errorMessage, nil)
+          } else if let response = result {
+            // Handle success response
+            var responseDict: [String: Any] = [:]
             
-            if let url3d = resultObj.url3d {
-              resultDict["url3d"] = url3d.absoluteString
+            // MPResponse fields - buildId, statusCode, message are non-optional
+            responseDict["statusCode"] = response.statusCode
+            responseDict["message"] = response.message
+            responseDict["buildId"] = response.buildId
+            
+            // Optional fields
+            if let version = response.version {
+              responseDict["version"] = version
             } else {
-              resultDict["url3d"] = NSNull()
+              responseDict["version"] = NSNull()
             }
             
-            if let url3dSuccess = resultObj.url3dSuccess {
-              resultDict["url3dSuccess"] = url3dSuccess.absoluteString
+            if let correlationId = response.correlationId {
+              responseDict["correlationId"] = correlationId
             } else {
-              resultDict["url3dSuccess"] = NSNull()
+              responseDict["correlationId"] = NSNull()
             }
             
-            if let url3dFail = resultObj.url3dFail {
-              resultDict["url3dFail"] = url3dFail.absoluteString
+            if let requestId = response.requestId {
+              responseDict["requestId"] = requestId
             } else {
-              resultDict["url3dFail"] = NSNull()
+              responseDict["requestId"] = NSNull()
             }
             
-            resultDict["jToken"] = jToken
-            if let cardAlias = cardAlias {
-              resultDict["cardAlias"] = cardAlias
-            } else {
-              resultDict["cardAlias"] = NSNull()
+            // Check for exception
+            if let exception = response.exception {
+              var exceptionDict: [String: Any] = [:]
+              // ExceptionResponse fields are non-optional
+              exceptionDict["level"] = exception.level
+              exceptionDict["code"] = exception.code
+              exceptionDict["message"] = exception.message
+              responseDict["exception"] = exceptionDict
+              rejecter("ERROR", exception.message, nil)
+              return
             }
             
-            responseDict["result"] = resultDict
+            // Handle result - GeneralResponseWith3D
+            if let resultObj = response.result {
+              var resultDict: [String: Any] = [:]
+              resultDict["token"] = resultObj.token
+              resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber
+              resultDict["responseCode"] = resultObj.responseCode
+              resultDict["resultDescription"] = resultObj.resultDescription
+              // iOS uses resultDescription, Android uses description - add both for consistency
+              resultDict["description"] = resultObj.resultDescription
+              
+              if let url3d = resultObj.url3d {
+                resultDict["url3d"] = url3d.absoluteString
+              } else {
+                resultDict["url3d"] = NSNull()
+              }
+              
+              if let url3dSuccess = resultObj.url3dSuccess {
+                resultDict["url3dSuccess"] = url3dSuccess.absoluteString
+              } else {
+                resultDict["url3dSuccess"] = NSNull()
+              }
+              
+              if let url3dFail = resultObj.url3dFail {
+                resultDict["url3dFail"] = url3dFail.absoluteString
+              } else {
+                resultDict["url3dFail"] = NSNull()
+              }
+              
+              resultDict["jToken"] = jToken
+              if let cardAlias = cardAlias {
+                resultDict["cardAlias"] = cardAlias
+              } else {
+                resultDict["cardAlias"] = NSNull()
+              }
+              
+              responseDict["result"] = resultDict
+            } else {
+              responseDict["result"] = NSNull()
+            }
+            
+            resolver(responseDict)
           } else {
-            responseDict["result"] = NSNull()
+            rejecter("ERROR", "Add Card failed: No response received", nil)
           }
-          
-          resolver(responseDict)
-        } else {
-          rejecter("ERROR", "Add Card failed: No response received", nil)
         }
-      }
-    )
+      )
+    }
+    DispatchQueue.main.async(execute: workItem)
   }
   
   // Helper method to convert SDK response to dictionary

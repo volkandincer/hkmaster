@@ -1,7 +1,9 @@
 # Masterpass SDK Fonksiyon Detaylı Denetim Raporu
 
 **Tarih**: 2025-11-09  
-**Kapsam**: Tüm Masterpass SDK fonksiyonları - TypeScript → Native Bridge → SDK akışı
+**Son Güncelleme**: 2025-11-09  
+**Kapsam**: Tüm Masterpass SDK fonksiyonları - TypeScript → Native Bridge → SDK akışı  
+**Versiyon**: 1.0
 
 ---
 
@@ -65,19 +67,26 @@ async addCard(params: MasterpassAddCardParams): Promise<MasterpassResponse>
 ```swift
 @objc func addCard(_ jToken: String, accountKey: String?, accountKeyType: String?, rrn: String?, userId: String?, card: NSDictionary, cardAlias: String?, isMsisdnValidatedByMerchant: NSNumber?, authenticationMethod: String?, additionalParams: NSDictionary?, ...)
 ```
-- **SDK Call**: `MasterPass.addCard(..., card: MPCard, ..., completion: @escaping (ServiceError?, MPResponse<GeneralResponseWith3D>?) -> Void)`
-- **MPCard Creation**: ✅ Main thread'de oluşturuluyor, MPText type ayarlanıyor
-- **Response Mapping**: ✅ GeneralResponseWith3D alanları (url3d, url3dSuccess, url3dFail, resultDescription) map ediliyor
+- **SDK Call**: `MasterPass.addCard(jToken, accountKey: accountKey ?? "", accountKeyType: accountKeyTypeEnum, rrn: rrn ?? "", userId: userId ?? "", card: mpCard, cardAlias: cardAlias ?? "", isMsisdnValidatedByMerchant: isMsisdnValidatedByMerchant?.boolValue ?? false, authenticationMethod: authType, additionalParamsDict, completion: @escaping (ServiceError?, MPResponse<GeneralResponseWith3D>?) -> Void)`
+- **MPCard Creation**: ✅ MPCard oluşturuluyor (cardNoMPText, cardHolderName, cvvMPText, expiryDate, checkboxProvider)
+- **MPText Creation**: ✅ Main thread'de oluşturuluyor (DispatchQueue.main.async), MPText type ayarlanıyor (.cardNo, .cvv)
+- **MPCheckboxStateProvider**: ✅ Terms and conditions checkbox checked olarak ayarlanıyor
+- **Enum Conversion**: ✅ AccountKeyType ve AuthType enum'a çevriliyor
+- **Response Mapping**: ✅ GeneralResponseWith3D alanları (token, retrievalReferenceNumber, responseCode, resultDescription, url3d, url3dSuccess, url3dFail) map ediliyor
+- **Android Compatibility**: ✅ description alanı resultDescription'dan ekleniyor
 - **Error Handling**: ✅ ServiceError alanları (responseDesc, responseCode, mdStatus, mdErrorMsg) map ediliyor
 
 ### Android Bridge (MasterpassModule.kt)
 ```kotlin
 @ReactMethod fun addCard(jToken: String, accountKey: String?, accountKeyType: String?, rrn: String?, userId: String?, card: ReadableMap, cardAlias: String?, isMsisdnValidatedByMerchant: Boolean?, authenticationMethod: String?, additionalParams: ReadableMap?, ...)
 ```
-- **SDK Call**: `mp.addCard(jToken, accountKey, accountKeyType, rrn, card, cardAlias, isMsisdnValidatedByMerchant, userId, authenticationMethod, listener)`
-- **MPCard Creation**: ✅ MPText type reflection ile ayarlanıyor (CARD_NO/CARDNUMBER, CVV/CVC)
+- **SDK Call**: `mp.addCard(jToken, accountKey ?: "", accountKeyTypeEnum, rrn ?: "", mpCard, cardAlias ?: "", isMsisdnValidatedByMerchant ?: false, userId ?: "", authTypeEnum, additionalParamsHashMap, listener)`
+- **MPCard Creation**: ✅ MPCard oluşturuluyor (cardNoMPText, cvvMPText, cardHolderName, expiryDate, checkBox)
+- **MPText Creation**: ✅ MPText type reflection ile ayarlanıyor (CARD_NO/CARDNUMBER, CVV/CVC) - type set edildikten sonra setText() çağrılıyor
+- **MPCheckBox**: ✅ Terms and conditions checkbox checked olarak ayarlanıyor (isChecked = true)
+- **Enum Conversion**: ✅ AccountKeyType ve AuthType enum'a çevriliyor
 - **Response Mapping**: ✅ GeneralAccountResponse alanları (retrievalReferenceNumber, responseCode, description, token) map ediliyor
-- **iOS Compatibility**: ✅ url3d, url3dSuccess, url3dFail null olarak ekleniyor
+- **iOS Compatibility**: ✅ url3d, url3dSuccess, url3dFail null olarak ekleniyor, resultDescription description'dan ekleniyor
 - **Error Handling**: ✅ ServiceError alanları (responseDesc, responseCode, mdStatus, mdErrorMsg) map ediliyor
 
 ### Sonuç
@@ -374,10 +383,11 @@ async start3DValidation(jToken: string, returnURL?: string): Promise<MasterpassR
 @ReactMethod fun start3DValidation(jToken: String, returnURL: String?, ...)
 ```
 - **SDK Call**: `mp.start3DValidation(jToken, webView, listener)`
-- **MPWebView Creation**: ✅ Activity'den oluşturuluyor, url3d ayarlanıyor
+- **MPWebView Creation**: ✅ Activity'den oluşturuluyor, `webView.url3d = returnURL` ayarlanıyor
 - **Validation**: ✅ returnURL boş kontrolü yapılıyor
-- **Response Mapping**: ✅ ValidateTransaction3DResult alanları map ediliyor
-- **Error Handling**: ✅ ServiceError alanları map ediliyor
+- **Response Mapping**: ✅ ValidateTransaction3DResult alanları (token) map ediliyor
+- **Error Handling**: ✅ ServiceError alanları (responseDesc, responseCode) map ediliyor
+- **Listener**: ✅ Transaction3DListener kullanılıyor (onSuccess, onServiceError, onServiceResponse, onInternalError)
 
 ### Sonuç
 - ✅ **TypeScript → Native**: Parametreler doğru gönderiliyor
@@ -637,8 +647,10 @@ async startLoanValidation(jToken: string, returnURL?: string): Promise<Masterpas
 ```
 - **SDK Call**: `MasterPass.start3DValidation(jToken, returnURL: returnURLValue, webView: webView, completion: @escaping (Result<Status3D?, MPError>) -> Void)`
 - **Implementation**: ✅ start3DValidation kullanılıyor (aynı pattern)
-- **Response Mapping**: ✅ Status3D alanları map ediliyor
-- **Error Handling**: ✅ MPError map ediliyor
+- **MPWebView Creation**: ✅ Main thread'de oluşturuluyor (DispatchQueue.main.async)
+- **Validation**: ✅ returnURL format validation yapılıyor
+- **Response Mapping**: ✅ Status3D alanları map ediliyor (status3D string olarak)
+- **Error Handling**: ✅ MPError map ediliyor (localizedDescription)
 
 ### Android Bridge (MasterpassModule.kt)
 ```kotlin
@@ -646,8 +658,11 @@ async startLoanValidation(jToken: string, returnURL?: string): Promise<Masterpas
 ```
 - **SDK Call**: `mp.start3DValidation(jToken, webView, listener)`
 - **Implementation**: ✅ start3DValidation kullanılıyor (aynı pattern)
-- **Response Mapping**: ✅ ValidateTransaction3DResult alanları map ediliyor
-- **Error Handling**: ✅ ServiceError alanları map ediliyor
+- **MPWebView Creation**: ✅ Activity'den oluşturuluyor, `webView.url3d = returnURL` ayarlanıyor
+- **Validation**: ✅ returnURL boş kontrolü yapılıyor
+- **Response Mapping**: ✅ ValidateTransaction3DResult alanları (token) map ediliyor
+- **Error Handling**: ✅ ServiceError alanları (responseDesc, responseCode) map ediliyor
+- **Listener**: ✅ Transaction3DListener kullanılıyor
 
 ### Sonuç
 - ✅ **TypeScript → Native**: Parametreler doğru gönderiliyor
