@@ -12,6 +12,7 @@
 ```
 
 **Kopyalama Komutu:**
+
 ```bash
 # Asıl projenize kopyalayın
 cp services/MasterpassService.ts [your-project]/services/
@@ -28,12 +29,14 @@ cp interfaces/*.interface.ts [your-project]/interfaces/
 ```
 
 **Kopyalama Komutu:**
+
 ```bash
 cp ios/hkmaster/RCTMasterpassModule.swift [your-project]/ios/[YourProjectName]/
 cp ios/hkmaster/RCTMasterpassModule.m [your-project]/ios/[YourProjectName]/
 ```
 
 **Podfile Güncellemesi:**
+
 ```ruby
 # ios/Podfile içine ekleyin
 pod 'Masterpass', :git => 'git@github.com:MasterpassTurkiye/Masterpass-ios-sdk.git'
@@ -43,6 +46,7 @@ use_frameworks! :linkage => :static
 ```
 
 **Pod Install:**
+
 ```bash
 cd ios && pod install
 ```
@@ -57,12 +61,14 @@ cd ios && pod install
 ```
 
 **Kopyalama Komutu:**
+
 ```bash
 cp android/app/src/main/java/com/hkmaster/MasterpassModule.kt [your-project]/android/app/src/main/java/com/[yourpackage]/
 # Package.kt dosyası varsa onu da kopyalayın
 ```
 
 **Package Adı Değişikliği:**
+
 - `MasterpassModule.kt` dosyasının başındaki `package com.hkmaster` → `package com.[yourpackage]` olarak değiştirin
 
 ---
@@ -70,6 +76,7 @@ cp android/app/src/main/java/com/hkmaster/MasterpassModule.kt [your-project]/and
 ### 4. Android Configuration Dosyaları (Zorunlu)
 
 #### a) build.gradle
+
 ```gradle
 // android/app/build.gradle - dependencies bloğuna ekleyin
 dependencies {
@@ -79,6 +86,7 @@ dependencies {
 ```
 
 #### b) settings.gradle
+
 ```gradle
 // android/settings.gradle - dependencyResolutionManagement bloğuna ekleyin
 dependencyResolutionManagement {
@@ -99,6 +107,7 @@ dependencyResolutionManagement {
 ```
 
 #### c) local.properties
+
 ```properties
 # android/local.properties - ekleyin (ve .gitignore'a ekleyin!)
 GITHUB_USERNAME=your-github-username
@@ -106,6 +115,7 @@ GITHUB_TOKEN=your-github-token
 ```
 
 #### d) proguard-rules.pro
+
 ```proguard
 # android/app/proguard-rules.pro - sonuna ekleyin
 -keep class com.masterpass.turkiye.** {*;}
@@ -117,6 +127,7 @@ GITHUB_TOKEN=your-github-token
 ### 5. iOS Configuration Dosyaları (Zorunlu)
 
 #### a) Info.plist - ATS Ayarları
+
 ```xml
 <!-- ios/[YourProjectName]/Info.plist -->
 <key>NSAppTransportSecurity</key>
@@ -141,22 +152,26 @@ GITHUB_TOKEN=your-github-token
 ### 1. Package/Namespace Güncellemeleri
 
 #### Android
+
 - [ ] `MasterpassModule.kt` dosyasında `package com.hkmaster` → `package com.[yourpackage]` değiştir
 - [ ] `MainApplication.kt` veya `MainApplication.java` dosyasında package import'u kontrol et
 
 #### iOS
+
 - [ ] Module adı genelde değişmez (`MasterpassModule`), ama kontrol et
 - [ ] Xcode'da dosyaların doğru target'a eklendiğini kontrol et
 
 ### 2. Build ve Test
 
 #### iOS
+
 - [ ] `cd ios && pod install` çalıştır
 - [ ] Xcode'da clean build (`Cmd+Shift+K`)
 - [ ] Build al (`Cmd+B`)
 - [ ] Initialize fonksiyonunu test et
 
 #### Android
+
 - [ ] Android Studio'da Gradle sync yap
 - [ ] Clean build (`Build > Clean Project`)
 - [ ] Build al (`Build > Rebuild Project`)
@@ -190,16 +205,19 @@ try {
 ## ⚠️ Önemli Notlar
 
 1. **GitHub Token Güvenliği**
+
    - `local.properties` dosyasını `.gitignore`'a ekleyin
    - Token'ı asla commit etmeyin
    - Production'da environment variable kullanmayı düşünün
 
 2. **Test vs Production**
+
    - Test URL: `https://mp-test-sdk.masterpassturkiye.com/`
    - Production URL: Masterpass tarafından sağlanacak
    - Environment'a göre URL'i ayarlayın
 
 3. **SDK Versiyonları**
+
    - iOS: Podfile'da belirtilen versiyon
    - Android: `build.gradle`'da `1.0.0` (güncel versiyonu kontrol edin)
 
@@ -251,4 +269,3 @@ cd [your-project]/ios && pod install
 ---
 
 **Hazır! Artık asıl projenize taşıma işlemine başlayabilirsiniz.** 🎉
-
