@@ -3,6 +3,10 @@ export interface MasterpassInitializeParams {
   terminalGroupId?: string;
   language?: string;
   url: string;
+  // iOS only
   cipherText?: string;
+  // Android only
+  verbose?: boolean;
+  merchantSecretKey?: string;
 }
 

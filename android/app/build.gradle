@@ -126,8 +126,9 @@ dependencies {
         implementation jscFlavor
     }
     
-    // Masterpass Android SDK - Local AAR file
-    implementation(name: 'masterpass-release', ext: 'aar')
+    // Masterpass Android SDK from GitHub Packages
+    // Group: com.masterpass.turkiye, Artifact: android, Version: 1.0.0
+    implementation("com.masterpass.turkiye:android:1.0.0")
     
     // OkHttp dependencies for Masterpass SDK
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

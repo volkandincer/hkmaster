@@ -237,6 +237,8 @@ class RCTMasterpassModule: RCTEventEmitter {
             resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber
             resultDict["responseCode"] = resultObj.responseCode
             resultDict["resultDescription"] = resultObj.resultDescription
+            // iOS uses resultDescription, Android uses description - add both for consistency
+            resultDict["description"] = resultObj.resultDescription
             
             if let url3d = resultObj.url3d {
               resultDict["url3d"] = url3d.absoluteString
@@ -606,11 +608,12 @@ class RCTMasterpassModule: RCTEventEmitter {
           }
           
           // Handle result - RemoveCardResponse
+          // Map RemoveCardResponse fields to match Android structure for consistency
           if let resultObj = response.result {
             var resultDict: [String: Any] = [:]
-            // RemoveCardResponse typically contains success confirmation
-            // Map any fields from RemoveCardResponse if available
-            resultDict["status"] = "success"
+            // iOS RemoveCardResponse fields - map to match Android structure
+            resultDict["clientId"] = resultObj.clientId
+            resultDict["refNo"] = resultObj.refNo ?? NSNull()
             responseDict["result"] = resultDict
           } else {
             responseDict["result"] = NSNull()
@@ -688,10 +691,15 @@ class RCTMasterpassModule: RCTEventEmitter {
           }
           
           // Handle result - GeneralResponse
+          // Map GeneralResponse fields to match Android GeneralAccountResponse structure for consistency
           if let resultObj = response.result {
             var resultDict: [String: Any] = [:]
-            // GeneralResponse typically contains success confirmation
-            resultDict["status"] = "success"
+            // iOS GeneralResponse fields - map to match Android GeneralAccountResponse structure
+            // Note: iOS GeneralResponse doesn't have 'description' field, Android GeneralAccountResponse does
+            resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber ?? NSNull()
+            resultDict["responseCode"] = resultObj.responseCode ?? NSNull()
+            resultDict["description"] = NSNull() // iOS GeneralResponse doesn't have description field
+            resultDict["token"] = resultObj.token ?? NSNull()
             responseDict["result"] = resultDict
           } else {
             responseDict["result"] = NSNull()
@@ -768,10 +776,15 @@ class RCTMasterpassModule: RCTEventEmitter {
           }
           
           // Handle result - GeneralResponse
+          // Map GeneralResponse fields to match Android GeneralAccountResponse structure for consistency
           if let resultObj = response.result {
             var resultDict: [String: Any] = [:]
-            // GeneralResponse typically contains success confirmation
-            resultDict["status"] = "success"
+            // iOS GeneralResponse fields - map to match Android GeneralAccountResponse structure
+            // Note: iOS GeneralResponse doesn't have 'description' field, Android GeneralAccountResponse does
+            resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber ?? NSNull()
+            resultDict["responseCode"] = resultObj.responseCode ?? NSNull()
+            resultDict["description"] = NSNull() // iOS GeneralResponse doesn't have description field
+            resultDict["token"] = resultObj.token ?? NSNull()
             responseDict["result"] = resultDict
           } else {
             responseDict["result"] = NSNull()
@@ -849,10 +862,15 @@ class RCTMasterpassModule: RCTEventEmitter {
           }
           
           // Handle result - GeneralResponse
+          // Map GeneralResponse fields to match Android GeneralAccountResponse structure for consistency
           if let resultObj = response.result {
             var resultDict: [String: Any] = [:]
-            // GeneralResponse typically contains success confirmation
-            resultDict["status"] = "success"
+            // iOS GeneralResponse fields - map to match Android GeneralAccountResponse structure
+            // Note: iOS GeneralResponse doesn't have 'description' field, Android GeneralAccountResponse does
+            resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber ?? NSNull()
+            resultDict["responseCode"] = resultObj.responseCode ?? NSNull()
+            resultDict["description"] = NSNull() // iOS GeneralResponse doesn't have description field
+            resultDict["token"] = resultObj.token ?? NSNull()
             responseDict["result"] = resultDict
           } else {
             responseDict["result"] = NSNull()
@@ -1049,7 +1067,8 @@ class RCTMasterpassModule: RCTEventEmitter {
       otpMPText.text = otp
       
       // Call SDK verify method with completion handler
-      // iOS SDK signature: verify(_:otp:_:)
+      // iOS SDK signature: verify(jToken: String, otpCode: MPText, completion: @escaping ((error: ServiceError?, response: MPResponse<VerifyResponse>?) -> Void))
+      // Note: Swift external parameter name is 'otp', not 'otpCode'
       MasterPass.verify(
         jToken,
         otp: otpMPText,
@@ -1107,10 +1126,42 @@ class RCTMasterpassModule: RCTEventEmitter {
             }
             
             // Handle result - VerifyResponse
+            // Map VerifyResponse fields to match Android structure for consistency
             if let resultObj = response.result {
               var resultDict: [String: Any] = [:]
-              // VerifyResponse typically contains success confirmation
-              resultDict["status"] = "success"
+              // iOS VerifyResponse fields - map to match Android structure
+              resultDict["isVerified"] = resultObj.isVerified
+              resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber ?? NSNull()
+              resultDict["cardUniqueNumber"] = resultObj.cardUniqueNumber ?? NSNull()
+              resultDict["token"] = resultObj.token ?? NSNull()
+              resultDict["responseCode"] = resultObj.responseCode ?? NSNull()
+              
+              // 3D Secure URLs - iOS uses URL type, convert to string
+              if let url3d = resultObj.url3d {
+                resultDict["url3d"] = url3d.absoluteString
+              } else {
+                resultDict["url3d"] = NSNull()
+              }
+              
+              if let url3dSuccess = resultObj.url3dSuccess {
+                resultDict["url3dSuccess"] = url3dSuccess.absoluteString
+              } else {
+                resultDict["url3dSuccess"] = NSNull()
+              }
+              
+              if let url3dFail = resultObj.url3dFail {
+                resultDict["url3dFail"] = url3dFail.absoluteString
+              } else {
+                resultDict["url3dFail"] = NSNull()
+              }
+              
+              // urlIFrame is already String type in VerifyResponse, not URL
+              if let urlIFrame = resultObj.urlIFrame {
+                resultDict["urlIFrame"] = urlIFrame
+              } else {
+                resultDict["urlIFrame"] = NSNull()
+              }
+              
               responseDict["result"] = resultDict
             } else {
               responseDict["result"] = NSNull()
@@ -1128,6 +1179,12 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Resend OTP
   
   @objc func resendOtp(_ jToken: String, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
+    // Validate jToken - SDK requires non-empty jToken
+    if jToken.isEmpty {
+      rejecter("ERROR", "jToken is required and cannot be empty", nil)
+      return
+    }
+    
     // Call SDK resendOtp method with completion handler
     // iOS SDK signature: resendOtp(_:_:)
     MasterPass.resendOtp(
@@ -1186,10 +1243,15 @@ class RCTMasterpassModule: RCTEventEmitter {
           }
           
           // Handle result - GeneralResponse
+          // Map GeneralResponse fields to match Android GeneralAccountResponse structure for consistency
           if let resultObj = response.result {
             var resultDict: [String: Any] = [:]
-            // GeneralResponse typically contains success confirmation
-            resultDict["status"] = "success"
+            // iOS GeneralResponse fields - map to match Android GeneralAccountResponse structure
+            // Note: iOS GeneralResponse doesn't have 'description' field, Android GeneralAccountResponse does
+            resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber ?? NSNull()
+            resultDict["responseCode"] = resultObj.responseCode ?? NSNull()
+            resultDict["description"] = NSNull() // iOS GeneralResponse doesn't have description field
+            resultDict["token"] = resultObj.token ?? NSNull()
             responseDict["result"] = resultDict
           } else {
             responseDict["result"] = NSNull()
@@ -1414,10 +1476,38 @@ class RCTMasterpassModule: RCTEventEmitter {
         }
         
         // Handle result - PaymentResponse
+        // Map PaymentResponse fields to match Android structure for consistency
         if let resultObj = response.result {
           var resultDict: [String: Any] = [:]
-          // PaymentResponse may contain transaction details, 3D Secure URL, etc.
-          resultDict["status"] = "success"
+          // iOS PaymentResponse fields - map to match Android structure
+          // Note: iOS PaymentResponse may have different field names than Android
+          resultDict["responseCode"] = resultObj.responseCode ?? NSNull()
+          // iOS PaymentResponse doesn't have 'description' field - set to null for Android compatibility
+          resultDict["description"] = NSNull()
+          resultDict["token"] = resultObj.token ?? NSNull()
+          resultDict["retrievalReferenceNumber"] = resultObj.retrievalReferenceNumber ?? NSNull()
+          resultDict["maskedNumber"] = resultObj.maskedNumber ?? NSNull()
+          resultDict["terminalGroupId"] = resultObj.terminalGroupId ?? NSNull()
+          
+          // 3D Secure URLs - iOS uses URL type, convert to string
+          if let url3d = resultObj.url3d {
+            resultDict["url3d"] = url3d.absoluteString
+          } else {
+            resultDict["url3d"] = NSNull()
+          }
+          
+          if let url3dSuccess = resultObj.url3dSuccess {
+            resultDict["url3dSuccess"] = url3dSuccess.absoluteString
+          } else {
+            resultDict["url3dSuccess"] = NSNull()
+          }
+          
+          if let url3dFail = resultObj.url3dFail {
+            resultDict["url3dFail"] = url3dFail.absoluteString
+          } else {
+            resultDict["url3dFail"] = NSNull()
+          }
+          
           responseDict["result"] = resultDict
         } else {
           responseDict["result"] = NSNull()
@@ -1991,14 +2081,16 @@ class RCTMasterpassModule: RCTEventEmitter {
   
   // MARK: - Start Loan Validation
   
-  @objc func startLoanValidation(_ jToken: String, returnURL: String, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    // Validate returnURL
-    guard !returnURL.isEmpty else {
+  @objc func startLoanValidation(_ jToken: String, returnURL: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
+    // Validate returnURL - SDK requires a valid URL, not empty string
+    // Even though it's optional in TypeScript, SDK requires it for Loan Validation
+    let validReturnURL = returnURL?.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let returnURLValue = validReturnURL, !returnURLValue.isEmpty else {
       rejecter("ERROR", "returnURL is required for Loan Validation", nil)
       return
     }
     
-    guard URL(string: returnURL) != nil else {
+    guard URL(string: returnURLValue) != nil else {
       rejecter("ERROR", "Invalid returnURL format", nil)
       return
     }
@@ -2009,7 +2101,7 @@ class RCTMasterpassModule: RCTEventEmitter {
       
       MasterPass.start3DValidation(
         jToken,
-        returnURL: returnURL,
+        returnURL: returnURLValue,
         webView: webView,
         { (result: Result<Status3D?, MPError>) in
           switch result {

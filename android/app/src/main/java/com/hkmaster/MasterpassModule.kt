@@ -9,15 +9,19 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableArray
 
-import com.paycore.masterpass.MasterPass
-import com.paycore.masterpass.enums.AccountKeyType
-import com.paycore.masterpass.enums.AuthType
-import com.paycore.masterpass.enums.MPCurrencyCode
-import com.paycore.masterpass.listener.*
-import com.paycore.masterpass.services.AccountServices
-import com.paycore.masterpass.mp.MPCard
-import com.paycore.masterpass.view.MPText
-import com.paycore.masterpass.view.MPCheckBox
+import com.masterpass.turkiye.MasterPass
+import com.masterpass.turkiye.enums.AccountKeyType
+import com.masterpass.turkiye.enums.AuthType
+import com.masterpass.turkiye.enums.MPCurrencyCode
+import com.masterpass.turkiye.enums.PaymentType
+import com.masterpass.turkiye.enums.Secure3DModel
+import com.masterpass.turkiye.enums.AccountChangeKind
+import com.masterpass.turkiye.listener.*
+import com.masterpass.turkiye.view.MPWebView
+// import com.masterpass.turkiye.services.AccountServices // TODO: Check if this exists in new SDK
+import com.masterpass.turkiye.mp.MPCard
+import com.masterpass.turkiye.view.MPText
+import com.masterpass.turkiye.view.MPCheckBox
 import android.app.Activity
 
 class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
@@ -31,21 +35,23 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   // MARK: - Initialize
   
   @ReactMethod
-  fun initialize(merchantId: Int, terminalGroupId: String?, language: String?, url: String, cipherText: String?, promise: Promise) {
+  fun initialize(merchantId: Int, terminalGroupId: String?, language: String?, url: String, verbose: Boolean?, merchantSecretKey: String?, promise: Promise) {
     try {
-      // Create MasterPass instance
+      // Initialize MasterPass directly
+      // Android SDK signature: MasterPass(mId: Long, tGId: String, lan: String, verbose: Boolean, bUrl: String, mSecKey: String?)
+      // SDK requires terminalGroupId to be non-empty - if null/empty, SDK will throw "All parameters needed" error
+      val validTerminalGroupId = terminalGroupId?.takeIf { it.isNotBlank() } 
+        ?: throw IllegalArgumentException("terminalGroupId is required and cannot be empty")
+      
+      // Android SDK MasterPass constructor: MasterPass(mId: Long, tGId: String, lan: String, verbose: Boolean, bUrl: String)
+      // Note: mSecKey parameter doesn't exist in current SDK version
       masterPassInstance = MasterPass(
         mId = merchantId.toLong(),
-        tGId = terminalGroupId ?: "",
-        lan = language ?: "en-US",
-        verbose = false,
+        tGId = validTerminalGroupId,
+        lan = language ?: "tr-TR",
+        verbose = verbose ?: false,
         bUrl = url
       )
-      
-      // Set cipherText if provided (if SDK supports it via Companion)
-      cipherText?.let {
-        // Handle cipherText if SDK supports it
-      }
       
       // Get SDK version information
       // Try to get version from MasterPass class package
@@ -75,13 +81,14 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
       } else {
         result.putNull("terminalGroupId")
       }
-      result.putString("language", language ?: "en-US")
+      result.putString("language", language ?: "tr-TR")
       result.putString("url", url)
+      result.putBoolean("verbose", verbose ?: false)
       // Use null instead of empty string to match iOS behavior
-      if (cipherText != null && cipherText.isNotBlank()) {
-        result.putString("cipherText", cipherText)
+      if (merchantSecretKey != null && merchantSecretKey.isNotBlank()) {
+        result.putString("merchantSecretKey", merchantSecretKey)
       } else {
-        result.putNull("cipherText")
+        result.putNull("merchantSecretKey")
       }
       result.putString("sdkVersion", sdkVersion)
       result.putString("sdkBuild", sdkBuild)
@@ -143,10 +150,54 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
       }
       
       // Create MPText instances for card number and CVV
+      // SDK requires MPText type to be set correctly for validation
+      // Android SDK MPText needs type to be set before setText, otherwise SDK throws "Card number is empty" error
       val cardNoMPText = MPText(activity)
+      // Set type to cardNo for card number validation using reflection
+      try {
+        val typeField = cardNoMPText.javaClass.getDeclaredField("type")
+        typeField.isAccessible = true
+        // Try to find MPTextType enum - Android SDK uses enum values like CARD_NO, CVV
+        val mpTextTypeClass = Class.forName("com.masterpass.turkiye.enums.MPTextType")
+        val cardNoType = mpTextTypeClass.getDeclaredField("CARD_NO").get(null)
+        typeField.set(cardNoMPText, cardNoType)
+      } catch (e: Exception) {
+        // If reflection fails, try alternative enum field names
+        try {
+          val mpTextTypeClass = Class.forName("com.masterpass.turkiye.enums.MPTextType")
+          val cardNoType = mpTextTypeClass.getDeclaredField("CARDNUMBER").get(null)
+          val typeField = cardNoMPText.javaClass.getDeclaredField("type")
+          typeField.isAccessible = true
+          typeField.set(cardNoMPText, cardNoType)
+        } catch (e2: Exception) {
+          // If all reflection attempts fail, SDK may handle type internally
+          // But this might cause "Card number is empty" error
+        }
+      }
+      // Set text after type is set - SDK validates based on type
       cardNoMPText.setText(cardNumber)
       
       val cvvMPText = MPText(activity)
+      // Set type to cvv for CVV validation
+      try {
+        val typeField = cvvMPText.javaClass.getDeclaredField("type")
+        typeField.isAccessible = true
+        val mpTextTypeClass = Class.forName("com.masterpass.turkiye.enums.MPTextType")
+        val cvvType = mpTextTypeClass.getDeclaredField("CVV").get(null)
+        typeField.set(cvvMPText, cvvType)
+      } catch (e: Exception) {
+        // If reflection fails, try alternative enum field names
+        try {
+          val mpTextTypeClass = Class.forName("com.masterpass.turkiye.enums.MPTextType")
+          val cvvType = mpTextTypeClass.getDeclaredField("CVC").get(null)
+          val typeField = cvvMPText.javaClass.getDeclaredField("type")
+          typeField.isAccessible = true
+          typeField.set(cvvMPText, cvvType)
+        } catch (e2: Exception) {
+          // If all reflection attempts fail, SDK may handle type internally
+        }
+      }
+      // Set text after type is set
       cvvMPText.setText(cvv)
       
       // Create MPCheckBox and set it to checked (required by SDK)
@@ -155,25 +206,36 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
       checkBox.isChecked = true
       
       // Create MPCard object - use non-null values for required fields
+      // MPCard constructor: MPCard(cardNo: MPText, cvv: MPText, cardHolder: String, date: String, checkBox: MPCheckBox)
       val mpCard = MPCard(
-        cardNo = cardNoMPText,
-        cvv = cvvMPText,
-        cardHolder = cardHolderName ?: "",
-        cardAlias = cardAlias ?: "",
-        date = expiryDate,
-        checkBox = checkBox
+        cardNoMPText,
+        cvvMPText,
+        cardHolderName ?: "",
+        expiryDate,
+        checkBox
       )
       
-      // Call AccountServices.saveCard with correct parameter format
-      // Note: SDK uses saveCard method, but we format parameters according to addCard signature
-      AccountServices.Companion.saveCard(
-        jToken = jToken,
-        accountKey = accountKey?.takeIf { it.isNotBlank() } ?: "",
-        accountKeyType = accountKeyTypeEnum,
-        rrn = rrn?.takeIf { it.isNotBlank() } ?: "",
-        card = mpCard,
-        saveCardListener = object : SaveCardListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.CardSaveResponse>) {
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod?.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      val mp = getMasterPassInstance()
+      
+      // Call MasterPass.addCard directly
+      // SDK signature: addCard(jToken, accountKey, accountKeyType, rrn, card, cardAlias, isMsisdnValidatedByMerchant, userId, authenticationMethod, listener)
+      mp.addCard(
+        jToken,
+        accountKey?.takeIf { it.isNotBlank() } ?: "",
+        accountKeyTypeEnum,
+        rrn?.takeIf { it.isNotBlank() } ?: "",
+        mpCard,
+        cardAlias?.takeIf { it.isNotBlank() } ?: "",
+        isMsisdnValidatedByMerchant ?: false,
+        userId?.takeIf { it.isNotBlank() } ?: "",
+        authTypeEnum,
+        object : AddCardListener {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.GeneralAccountResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -246,17 +308,14 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("requestId")
               }
               
-              // Wrap CardSaveResponse in a result object to match TypeScript interface
+              // Handle response result - GeneralAccountResponse
+              // Note: SDK may return different response type at runtime, but interface expects GeneralAccountResponse
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.account.CardSaveResponse) {
-                val cardSaveResult = Arguments.createMap()
-                
-                // Handle nullable fields properly
-                if (resultObj.token != null) {
-                  cardSaveResult.putString("token", resultObj.token)
-                } else {
-                  cardSaveResult.putNull("token")
-                }
+              val cardSaveResult = Arguments.createMap()
+              
+              // Map GeneralAccountResponse fields
+              if (resultObj != null) {
+                cardSaveResult.putString("status", "success")
                 
                 if (resultObj.retrievalReferenceNumber != null) {
                   cardSaveResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
@@ -270,11 +329,25 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                   cardSaveResult.putNull("responseCode")
                 }
                 
-                if (resultObj.resultDescription != null) {
-                  cardSaveResult.putString("resultDescription", resultObj.resultDescription)
+                if (resultObj.description != null) {
+                  cardSaveResult.putString("description", resultObj.description)
+                  cardSaveResult.putString("resultDescription", resultObj.description) // iOS compatibility
                 } else {
+                  cardSaveResult.putNull("description")
                   cardSaveResult.putNull("resultDescription")
                 }
+                
+                if (resultObj.token != null) {
+                  cardSaveResult.putString("token", resultObj.token)
+                } else {
+                  cardSaveResult.putNull("token")
+                }
+                
+                // Android GeneralAccountResponse doesn't have url3d fields, but iOS GeneralResponseWith3D does
+                // Add null values to match iOS response structure for consistency
+                cardSaveResult.putNull("url3d")
+                cardSaveResult.putNull("url3dSuccess")
+                cardSaveResult.putNull("url3dFail")
                 
                 cardSaveResult.putString("jToken", jToken)
                 
@@ -283,17 +356,24 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 } else {
                   cardSaveResult.putNull("cardAlias")
                 }
-                
-                result.putMap("result", cardSaveResult)
-              } else if (resultObj != null) {
-                // Fallback: if result is not CardSaveResponse, wrap it in result object
-                val fallbackResult = Arguments.createMap()
-                fallbackResult.putString("data", resultObj.toString())
-                result.putMap("result", fallbackResult)
               } else {
-                // If result is null, put null in result field
-                result.putNull("result")
+                // If result is null, create basic structure
+                cardSaveResult.putString("status", "success")
+                cardSaveResult.putString("jToken", jToken)
+                if (cardAlias != null) {
+                  cardSaveResult.putString("cardAlias", cardAlias)
+                }
+                cardSaveResult.putNull("retrievalReferenceNumber")
+                cardSaveResult.putNull("responseCode")
+                cardSaveResult.putNull("description")
+                cardSaveResult.putNull("resultDescription")
+                cardSaveResult.putNull("token")
+                cardSaveResult.putNull("url3d")
+                cardSaveResult.putNull("url3dSuccess")
+                cardSaveResult.putNull("url3dFail")
               }
+              
+              result.putMap("result", cardSaveResult)
               
               promise.resolve(result)
             } catch (e: Exception) {
@@ -301,7 +381,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -313,8 +393,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -339,7 +427,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         jToken = jToken,
         accountKey = accountKey ?: "",
         linkToMerchantListener = object : LinkToMerchantListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.LinkToMerchantResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.LinkToMerchantResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -381,14 +469,103 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 return
               }
               
-            val result = convertMPResponseToMap(response)
+              // Map LinkToMerchantResponse manually to match iOS structure
+              val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Link Account To Merchant successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle LinkToMerchantResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.account.LinkToMerchantResponse) {
+                val linkResult = Arguments.createMap()
+                
+                if (resultObj.token != null) {
+                  linkResult.putString("token", resultObj.token)
+                } else {
+                  linkResult.putNull("token")
+                }
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  linkResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  linkResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  linkResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  linkResult.putNull("responseCode")
+                }
+                
+                if (resultObj.description != null) {
+                  linkResult.putString("description", resultObj.description)
+                } else {
+                  linkResult.putNull("description")
+                }
+                
+                if (resultObj.cardIssuerName != null) {
+                  linkResult.putString("cardIssuerName", resultObj.cardIssuerName)
+                } else {
+                  linkResult.putNull("cardIssuerName")
+                }
+                
+                if (resultObj.maskedPan != null) {
+                  linkResult.putString("maskedPan", resultObj.maskedPan)
+                } else {
+                  linkResult.putNull("maskedPan")
+                }
+                
+                linkResult.putString("jToken", jToken)
+                
+                if (accountKey != null) {
+                  linkResult.putString("accountKey", accountKey)
+                } else {
+                  linkResult.putNull("accountKey")
+                }
+                
+                result.putMap("result", linkResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
             promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -400,8 +577,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -426,13 +611,13 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         AccountKeyType.values().find { it.name.equals(accountKeyType, ignoreCase = true) }
       } ?: throw IllegalArgumentException("accountKeyType is required")
       
-      mp.getCard(
-        jToken = jToken,
-        accountKey = accountKey ?: "",
-        accountKeyType = accountKeyTypeEnum,
-        merchantUserId = userId ?: "",
-        cardRequestListener = object : CardRequestListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.CardResponse>) {
+      mp.accountAccess(
+        jToken,
+        accountKey ?: "",
+        accountKeyTypeEnum,
+        userId ?: "",
+        object : AccountAccessRequestListener {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.CardResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -507,50 +692,44 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               // Handle CardResponse result
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.account.CardResponse) {
+              if (resultObj is com.masterpass.turkiye.models.account.CardResponse) {
                 val cardResponseResult = Arguments.createMap()
                 
                 cardResponseResult.putString("accountKey", resultObj.accountKey)
                 cardResponseResult.putString("accountState", resultObj.accountState)
                 
                 // Convert cards array
+                // CardResponse.cards is ArrayList<Object>, need to handle as Map or convert
                 val cardsArray = Arguments.createArray()
-                for (card in resultObj.cards) {
+                for (cardObj in resultObj.cards) {
                   val cardMap = Arguments.createMap()
-                  cardMap.putString("cardAlias", card.cardAlias)
-                  cardMap.putString("cardState", card.cardState)
-                  cardMap.putString("maskedCardNumber", card.maskedCardNumber)
-                  cardMap.putString("uniqueCardNumber", card.uniqueCardNumber)
-                  cardMap.putString("cardType", card.cardType)
-                  
-                  if (card.productName != null) {
-                    cardMap.putString("productName", card.productName)
+                  // cards is ArrayList<Object>, convert to string representation or handle as Map
+                  if (cardObj is Map<*, *>) {
+                    (cardObj as? Map<String, *>)?.let { card ->
+                      card["cardAlias"]?.let { cardMap.putString("cardAlias", it.toString()) }
+                      card["cardState"]?.let { cardMap.putString("cardState", it.toString()) }
+                      card["maskedCardNumber"]?.let { cardMap.putString("maskedCardNumber", it.toString()) }
+                      card["uniqueCardNumber"]?.let { cardMap.putString("uniqueCardNumber", it.toString()) }
+                      card["cardType"]?.let { cardMap.putString("cardType", it.toString()) }
+                      card["productName"]?.let { cardMap.putString("productName", it.toString()) }
+                      card["cardBin"]?.let { cardMap.putString("cardBin", it.toString()) }
+                      card["cardIssuerIcaNumber"]?.let { cardMap.putString("cardIssuerIcaNumber", it.toString()) }
+                    }
                   } else {
-                    cardMap.putNull("productName")
+                    // Fallback: convert object to string
+                    cardMap.putString("data", cardObj.toString())
                   }
-                  
-                  cardMap.putString("cardBin", card.cardBin)
-                  
-                  if (card.cardIssuerIcaNumber != null) {
-                    cardMap.putString("cardIssuerIcaNumber", card.cardIssuerIcaNumber)
-                  } else {
-                    cardMap.putNull("cardIssuerIcaNumber")
-                  }
-                  
-                  cardMap.putString("cardValidationType", card.cardValidationType)
-                  cardMap.putBoolean("isDefaultCard", card.isDefaultCard)
-                  cardMap.putBoolean("expireSoon", card.expireSoon)
-                  cardMap.putBoolean("isExpired", card.isExpired)
-                  cardMap.putBoolean("isMasterpassMember", card.isMasterpassMember)
                   
                   cardsArray.pushMap(cardMap)
                 }
                 cardResponseResult.putArray("cards", cardsArray)
                 
                 // Android SDK CardResponse doesn't have accountInformation or recipientCards
-                // These fields are iOS-specific, so we set them to null for Android
-                cardResponseResult.putNull("accountInformation")
-                cardResponseResult.putNull("recipientCards")
+                // These fields are iOS-specific, so we create compatible structure for Android
+                val accountInfoMap = Arguments.createMap()
+                accountInfoMap.putBoolean("isAccountLinked", false) // Default value since Android doesn't have this field
+                cardResponseResult.putMap("accountInformation", accountInfoMap)
+                cardResponseResult.putNull("recipientCards") // Android doesn't have recipientCards
                 
                 result.putMap("result", cardResponseResult)
               } else if (resultObj != null) {
@@ -569,7 +748,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -581,8 +760,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -608,7 +795,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         accountKey = accountKey ?: "",
         cardAlias = cardAlias ?: "",
         removeCardListener = object : RemoveCardListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.RemoveCardResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.RemoveCardResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -683,12 +870,18 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               // Handle RemoveCardResponse result
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.account.RemoveCardResponse) {
+              if (resultObj is com.masterpass.turkiye.models.account.RemoveCardResponse) {
                 val removeCardResult = Arguments.createMap()
                 
-                // RemoveCardResponse typically contains success confirmation
-                // Map any fields from RemoveCardResponse if available
-                removeCardResult.putString("status", "success")
+                // Map RemoveCardResponse fields - Android SDK has these fields:
+                // clientId (int), refNo (String)
+                removeCardResult.putInt("clientId", resultObj.clientId)
+                
+                if (resultObj.refNo != null) {
+                  removeCardResult.putString("refNo", resultObj.refNo)
+                } else {
+                  removeCardResult.putNull("refNo")
+                }
                 
                 result.putMap("result", removeCardResult)
               } else if (resultObj != null) {
@@ -707,7 +900,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -719,8 +912,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -747,7 +948,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         currentUserId = currentUserId ?: "",
         newUserId = newUserId ?: "",
         updateUserIdListener = object : UpdateUserIdListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.UpdateUserIdResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.GeneralAccountResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -820,14 +1021,35 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("requestId")
               }
               
-              // Handle UpdateUserIdResponse result
+              // Handle UpdateUserIdResponse result - uses GeneralAccountResponse
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.account.UpdateUserIdResponse) {
+              if (resultObj is com.masterpass.turkiye.models.account.GeneralAccountResponse) {
                 val updateUserIdResult = Arguments.createMap()
                 
-                // UpdateUserIdResponse typically contains success confirmation
-                // Map any fields from UpdateUserIdResponse if available
-                updateUserIdResult.putString("status", "success")
+                // Map GeneralAccountResponse fields
+                if (resultObj.retrievalReferenceNumber != null) {
+                  updateUserIdResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  updateUserIdResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  updateUserIdResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  updateUserIdResult.putNull("responseCode")
+                }
+                
+                if (resultObj.description != null) {
+                  updateUserIdResult.putString("description", resultObj.description)
+                } else {
+                  updateUserIdResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  updateUserIdResult.putString("token", resultObj.token)
+                } else {
+                  updateUserIdResult.putNull("token")
+                }
                 
                 result.putMap("result", updateUserIdResult)
               } else if (resultObj != null) {
@@ -846,7 +1068,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -858,8 +1080,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -885,7 +1115,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         accountKey = accountKey ?: "",
         newMsisdn = newMsisdn ?: "",
         updateUserMsisdnListener = object : UpdateUserMsisdnListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.UpdateUserMsisdnResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.GeneralAccountResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -958,14 +1188,35 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("requestId")
               }
               
-              // Handle UpdateUserMsisdnResponse result
+              // Handle UpdateUserMsisdnResponse result - uses GeneralAccountResponse
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.account.UpdateUserMsisdnResponse) {
+              if (resultObj is com.masterpass.turkiye.models.account.GeneralAccountResponse) {
                 val updateUserMsisdnResult = Arguments.createMap()
                 
-                // UpdateUserMsisdnResponse typically contains success confirmation
-                // Map any fields from UpdateUserMsisdnResponse if available
-                updateUserMsisdnResult.putString("status", "success")
+                // Map GeneralAccountResponse fields
+                if (resultObj.retrievalReferenceNumber != null) {
+                  updateUserMsisdnResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  updateUserMsisdnResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  updateUserMsisdnResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  updateUserMsisdnResult.putNull("responseCode")
+                }
+                
+                if (resultObj.description != null) {
+                  updateUserMsisdnResult.putString("description", resultObj.description)
+                } else {
+                  updateUserMsisdnResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  updateUserMsisdnResult.putString("token", resultObj.token)
+                } else {
+                  updateUserMsisdnResult.putNull("token")
+                }
                 
                 result.putMap("result", updateUserMsisdnResult)
               } else if (resultObj != null) {
@@ -984,7 +1235,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -996,8 +1247,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -1024,7 +1283,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         currentUserId = currentUserId ?: "",
         newUserId = newUserId ?: "",
         addUserIdListener = object : AddUserIdListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.account.AddUserIdResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.GeneralAccountResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -1097,14 +1356,35 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("requestId")
               }
               
-              // Handle AddUserIdResponse result
+              // Handle AddUserIdResponse result - uses GeneralAccountResponse
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.account.AddUserIdResponse) {
+              if (resultObj is com.masterpass.turkiye.models.account.GeneralAccountResponse) {
                 val addUserIdResult = Arguments.createMap()
                 
-                // AddUserIdResponse typically contains success confirmation
-                // Map any fields from AddUserIdResponse if available
-                addUserIdResult.putString("status", "success")
+                // Map GeneralAccountResponse fields
+                if (resultObj.retrievalReferenceNumber != null) {
+                  addUserIdResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  addUserIdResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  addUserIdResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  addUserIdResult.putNull("responseCode")
+                }
+                
+                if (resultObj.description != null) {
+                  addUserIdResult.putString("description", resultObj.description)
+                } else {
+                  addUserIdResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  addUserIdResult.putString("token", resultObj.token)
+                } else {
+                  addUserIdResult.putNull("token")
+                }
                 
                 result.putMap("result", addUserIdResult)
               } else if (resultObj != null) {
@@ -1123,7 +1403,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -1135,8 +1415,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -1157,14 +1445,121 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   fun recurringOrderRegister(jToken: String, accountKey: String?, cardAlias: String?, productId: String?, amountLimit: String?, expireDate: String, authenticationMethod: String?, rrn: String, promise: Promise) {
     try {
       val mp = getMasterPassInstance()
-      // SDK method not found - recurringOrderRegister doesn't exist in AccountServices
-      // Placeholder implementation - SDK method needs to be verified
+      
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod?.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      // SDK signature: recurringOrderRegister(jToken, accountKey, cardAlias, productId, amountLimit, expireDate, authenticationMethod, rrn, listener)
+      mp.recurringOrderRegister(
+        jToken,
+        accountKey ?: "",
+        cardAlias ?: "",
+        productId ?: "",
+        amountLimit ?: "",
+        expireDate,
+        authTypeEnum,
+        rrn,
+        object : RecurringOrderListener {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.GeneralAccountResponse>) {
+            try {
+              if (response.exception != null) {
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Recurring Order Register failed", null)
+                return
+              }
+              
+              // Map GeneralAccountResponse manually to match iOS structure
       val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Recurring Order Register - SDK method not found, needs verification")
-      result.putString("jToken", jToken)
-      result.putString("rrn", rrn)
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Recurring Order Register successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle GeneralAccountResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.account.GeneralAccountResponse) {
+                val recurringResult = Arguments.createMap()
+                
+                // Map GeneralAccountResponse fields
+                if (resultObj.retrievalReferenceNumber != null) {
+                  recurringResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  recurringResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  recurringResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  recurringResult.putNull("responseCode")
+                }
+                
+                if (resultObj.description != null) {
+                  recurringResult.putString("description", resultObj.description)
+                } else {
+                  recurringResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  recurringResult.putString("token", resultObj.token)
+                } else {
+                  recurringResult.putNull("token")
+                }
+                
+                result.putMap("result", recurringResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
       promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
+            try {
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Recurring Order Register failed")
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Recurring Order Register failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1176,14 +1571,115 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   fun recurringOrderUpdate(jToken: String, accountKey: String?, cardAlias: String?, productId: String?, amountLimit: String?, expireDate: String, rrn: String, promise: Promise) {
     try {
       val mp = getMasterPassInstance()
-      // SDK method not found - recurringOrderUpdate doesn't exist in AccountServices
-      // Placeholder implementation - SDK method needs to be verified
+      
+      // SDK signature: recurringOrderUpdate(jToken, accountKey, cardAlias, productId, amountLimit, expireDate, rrn, listener)
+      mp.recurringOrderUpdate(
+        jToken,
+        accountKey ?: "",
+        cardAlias ?: "",
+        productId ?: "",
+        amountLimit ?: "",
+        expireDate,
+        rrn,
+        object : RecurringOrderListener {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.GeneralAccountResponse>) {
+            try {
+              if (response.exception != null) {
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Recurring Order Update failed", null)
+                return
+              }
+              
+              // Map GeneralAccountResponse manually to match iOS structure
       val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Recurring Order Update - SDK method not found, needs verification")
-      result.putString("jToken", jToken)
-      result.putString("rrn", rrn)
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Recurring Order Update successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle GeneralAccountResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.account.GeneralAccountResponse) {
+                val recurringResult = Arguments.createMap()
+                
+                // Map GeneralAccountResponse fields
+                if (resultObj.retrievalReferenceNumber != null) {
+                  recurringResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  recurringResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  recurringResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  recurringResult.putNull("responseCode")
+                }
+                
+                if (resultObj.description != null) {
+                  recurringResult.putString("description", resultObj.description)
+                } else {
+                  recurringResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  recurringResult.putString("token", resultObj.token)
+                } else {
+                  recurringResult.putNull("token")
+                }
+                
+                result.putMap("result", recurringResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
       promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
+            try {
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Recurring Order Update failed")
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Recurring Order Update failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1195,14 +1691,125 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   fun recurringOrderDelete(jToken: String, accountKey: String?, accountChangedEventName: String?, cardAlias: String?, productId: String?, authenticationMethod: String?, rrn: String, promise: Promise) {
     try {
       val mp = getMasterPassInstance()
-      // SDK method not found - recurringOrderDelete doesn't exist in AccountServices
-      // Placeholder implementation - SDK method needs to be verified
+      
+      // Convert accountChangedEventName to AccountChangeKind enum
+      val accountChangeKindEnum = accountChangedEventName?.let {
+        AccountChangeKind.values().find { kind -> kind.name.equals(accountChangedEventName, ignoreCase = true) }
+      } ?: AccountChangeKind.RecurringOrderDeleted // Default value
+      
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod?.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      // SDK signature: recurringOrderDelete(jToken, accountChangeKind, accountKey, authenticationMethod, cardAlias, productId, rrn, listener)
+      mp.recurringOrderDelete(
+        jToken,
+        accountChangeKindEnum,
+        accountKey ?: "",
+        authTypeEnum,
+        cardAlias ?: "",
+        productId ?: "",
+        rrn,
+        object : RecurringOrderListener {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.GeneralAccountResponse>) {
+            try {
+              if (response.exception != null) {
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Recurring Order Delete failed", null)
+                return
+              }
+              
+              // Map GeneralAccountResponse manually to match iOS structure
       val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Recurring Order Delete - SDK method not found, needs verification")
-      result.putString("jToken", jToken)
-      result.putString("rrn", rrn)
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Recurring Order Delete successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle GeneralAccountResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.account.GeneralAccountResponse) {
+                val recurringResult = Arguments.createMap()
+                
+                // Map GeneralAccountResponse fields
+                if (resultObj.retrievalReferenceNumber != null) {
+                  recurringResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  recurringResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  recurringResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  recurringResult.putNull("responseCode")
+                }
+                
+                if (resultObj.description != null) {
+                  recurringResult.putString("description", resultObj.description)
+                } else {
+                  recurringResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  recurringResult.putString("token", resultObj.token)
+                } else {
+                  recurringResult.putNull("token")
+                }
+                
+                result.putMap("result", recurringResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
       promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
+            try {
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Recurring Order Delete failed")
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Recurring Order Delete failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1214,11 +1821,45 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   fun verify(jToken: String, otp: String, promise: Promise) {
     try {
       val mp = getMasterPassInstance()
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      // Create MPText for OTP (required by SDK)
+      // SDK requires MPText type to be set correctly for validation
+      // Android SDK MPText needs type to be set before setText, otherwise SDK may throw validation errors
+      val otpMPText = MPText(activity)
+      // Set type to OTP for OTP validation using reflection
+      try {
+        val typeField = otpMPText.javaClass.getDeclaredField("type")
+        typeField.isAccessible = true
+        // Try to find MPTextType enum - Android SDK uses enum values like OTP, RTA
+        val mpTextTypeClass = Class.forName("com.masterpass.turkiye.enums.MPTextType")
+        val otpType = mpTextTypeClass.getDeclaredField("OTP").get(null)
+        typeField.set(otpMPText, otpType)
+      } catch (e: Exception) {
+        // If reflection fails, try alternative enum field names
+        try {
+          val mpTextTypeClass = Class.forName("com.masterpass.turkiye.enums.MPTextType")
+          val otpType = mpTextTypeClass.getDeclaredField("RTA").get(null) // RTA is alternative for OTP
+          val typeField = otpMPText.javaClass.getDeclaredField("type")
+          typeField.isAccessible = true
+          typeField.set(otpMPText, otpType)
+        } catch (e2: Exception) {
+          // If all reflection attempts fail, SDK may handle type internally
+          // But this might cause validation errors
+        }
+      }
+      // Set text after type is set - SDK validates based on type
+      otpMPText.setText(otp)
+      
       mp.verify(
         jToken = jToken,
-        otpCode = otp,
+        otpCode = otpMPText,
         verifyListener = object : VerifyListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.validateflow.VerifyResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.validateflow.VerifyResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -1293,12 +1934,61 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               // Handle VerifyResponse result
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.validateflow.VerifyResponse) {
+              if (resultObj is com.masterpass.turkiye.models.validateflow.VerifyResponse) {
                 val verifyResult = Arguments.createMap()
                 
-                // VerifyResponse typically contains success confirmation
-                // Map any fields from VerifyResponse if available
-                verifyResult.putString("status", "success")
+                // Map VerifyResponse fields - Android SDK has these fields:
+                // retrievalReferenceNumber, isVerified, cardUniqueNumber, token, responseCode, url3d, url3dSuccess, url3dFail, urlIFrame
+                verifyResult.putBoolean("isVerified", resultObj.isVerified)
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  verifyResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  verifyResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.cardUniqueNumber != null) {
+                  verifyResult.putString("cardUniqueNumber", resultObj.cardUniqueNumber)
+                } else {
+                  verifyResult.putNull("cardUniqueNumber")
+                }
+                
+                if (resultObj.token != null) {
+                  verifyResult.putString("token", resultObj.token)
+                } else {
+                  verifyResult.putNull("token")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  verifyResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  verifyResult.putNull("responseCode")
+                }
+                
+                // 3D Secure URLs
+                if (resultObj.url3d != null) {
+                  verifyResult.putString("url3d", resultObj.url3d)
+                } else {
+                  verifyResult.putNull("url3d")
+                }
+                
+                if (resultObj.url3dSuccess != null) {
+                  verifyResult.putString("url3dSuccess", resultObj.url3dSuccess)
+                } else {
+                  verifyResult.putNull("url3dSuccess")
+                }
+                
+                if (resultObj.url3dFail != null) {
+                  verifyResult.putString("url3dFail", resultObj.url3dFail)
+                } else {
+                  verifyResult.putNull("url3dFail")
+                }
+                
+                if (resultObj.urlIFrame != null) {
+                  verifyResult.putString("urlIFrame", resultObj.urlIFrame)
+                } else {
+                  verifyResult.putNull("urlIFrame")
+                }
                 
                 result.putMap("result", verifyResult)
               } else if (resultObj != null) {
@@ -1317,7 +2007,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -1329,8 +2019,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -1350,11 +2048,17 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun resendOtp(jToken: String, promise: Promise) {
     try {
+      // Validate jToken - SDK requires non-empty jToken
+      if (jToken.isNullOrBlank()) {
+        promise.reject("ERROR", "jToken is required and cannot be empty", null)
+        return
+      }
+      
       val mp = getMasterPassInstance()
       mp.resendOtp(
         jToken = jToken,
         resendOtpListener = object : ResendOtpListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.validateflow.ResendOtpResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.account.GeneralAccountResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -1427,14 +2131,35 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("requestId")
               }
               
-              // Handle ResendOtpResponse result
+              // Handle GeneralAccountResponse result
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.validateflow.ResendOtpResponse) {
+              if (resultObj is com.masterpass.turkiye.models.account.GeneralAccountResponse) {
                 val resendOtpResult = Arguments.createMap()
                 
-                // ResendOtpResponse typically contains success confirmation
-                // Map any fields from ResendOtpResponse if available
-                resendOtpResult.putString("status", "success")
+                // Map GeneralAccountResponse fields
+                if (resultObj.retrievalReferenceNumber != null) {
+                  resendOtpResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  resendOtpResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.responseCode != null) {
+                  resendOtpResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  resendOtpResult.putNull("responseCode")
+                }
+                
+                if (resultObj.description != null) {
+                  resendOtpResult.putString("description", resultObj.description)
+                } else {
+                  resendOtpResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  resendOtpResult.putString("token", resultObj.token)
+                } else {
+                  resendOtpResult.putNull("token")
+                }
                 
                 result.putMap("result", resendOtpResult)
               } else if (resultObj != null) {
@@ -1453,7 +2178,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -1465,8 +2190,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -1486,27 +2219,85 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun start3DValidation(jToken: String, returnURL: String?, promise: Promise) {
     try {
-      // Android SDK uses MPWebView for 3D Secure validation
-      // Found: Transaction3DListener and MPWebView.loadUrl(Transaction3DListener) exist in SDK
-      // However, 3D Secure URL typically comes from payment response
-      // Full implementation requires:
-      // 1. Get 3D Secure URL from payment response (paymentRequest/directPayment)
-      // 2. Create MPWebView instance
-      // 3. Set Transaction3DListener via webView.callback
-      // 4. Call MPWebView.loadUrl(Transaction3DListener) with the URL
-      // 
-      // For now, this is a placeholder that indicates MPWebView and Transaction3DListener are available
-      // but the 3D Secure URL needs to come from payment flow
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Start 3D Validation - Bridge working (MPWebView and Transaction3DListener available, but 3D Secure URL required from payment response)")
-      result.putString("jToken", jToken)
-      if (returnURL != null) {
-        result.putString("returnURL", returnURL)
-      } else {
-        result.putNull("returnURL")
+      val mp = getMasterPassInstance()
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
       }
-      promise.resolve(result)
+      
+      // Validate returnURL - SDK requires a valid URL for 3D Secure
+      if (returnURL.isNullOrBlank()) {
+        promise.reject("ERROR", "returnURL is required for 3D Secure validation", null)
+        return
+      }
+      
+      // Create MPWebView instance on main thread
+      val webView = MPWebView(activity)
+      webView.url3d = returnURL
+      
+      // Create Transaction3DListener - parameters are nullable in Kotlin interface
+      val listener = object : com.masterpass.turkiye.listener.Transaction3DListener {
+        override fun onSuccess(result: com.masterpass.turkiye.results.ValidateTransaction3DResult?) {
+          try {
+            val responseMap = Arguments.createMap()
+            responseMap.putInt("statusCode", 200)
+            responseMap.putString("message", "3D Validation successful")
+            responseMap.putString("status", "success")
+            // Map ValidateTransaction3DResult token if available
+            if (result?.token != null) {
+              responseMap.putString("token", result.token)
+            }
+            promise.resolve(responseMap)
+          } catch (e: Exception) {
+            promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+          }
+        }
+        
+        override fun onServiceError(error: com.masterpass.turkiye.response.ServiceError?) {
+          try {
+            val errorMessage = StringBuilder()
+            errorMessage.append(error?.responseDesc ?: "3D Validation failed")
+            if (error?.responseCode != null) {
+              errorMessage.append(" (Code: ${error.responseCode})")
+            }
+            promise.reject("ERROR", errorMessage.toString(), null)
+          } catch (e: Exception) {
+            promise.reject("ERROR", error?.responseDesc ?: "3D Validation failed", null)
+          }
+        }
+        
+        override fun onServiceResponse(response: com.masterpass.turkiye.response.ServiceResponse?) {
+          try {
+            val responseMap = Arguments.createMap()
+            responseMap.putInt("statusCode", 200)
+            responseMap.putString("message", response?.responseDesc ?: "3D Validation response received")
+            if (response?.token != null) {
+              responseMap.putString("token", response.token)
+            }
+            if (response?.refNo != null) {
+              responseMap.putString("refNo", response.refNo)
+            }
+            if (response?.responseCode != null) {
+              responseMap.putString("responseCode", response.responseCode)
+            }
+            promise.resolve(responseMap)
+          } catch (e: Exception) {
+            promise.reject("ERROR", "Failed to process service response: ${e.message ?: "Unknown error"}", e)
+          }
+        }
+        
+        override fun onInternalError(error: String?) {
+          promise.reject("ERROR", "Internal error: ${error ?: "Unknown"}", null)
+        }
+      }
+      
+      // SDK signature: start3DValidation(jToken, webView, listener)
+      mp.start3DValidation(
+        jToken,
+        webView,
+        listener
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1554,22 +2345,59 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         cvvMPText.setText(cvv)
       }
       
-      // Call SDK paymentRequest method
-      // Android SDK signature: paymentRequest(jToken, accountKey?, acquirerIcaNumber?, amount, authenticationMethod, cardAlias?, currencyCode?, installmentCount?, orderNo?, requestReferenceNo?, cvv: MPText, paymentListener)
-      mp.paymentRequest(
-        jToken = jToken,
-        accountKey = accountKey,
-        acquirerIcaNumber = acquirerIcaNumber,
-        amount = amount,
-        authenticationMethod = authTypeEnum,
-        cardAlias = cardAlias,
-        currencyCode = currencyCode,
-        installmentCount = if (installmentCount > 0) installmentCount else null,
-        orderNo = orderNo,
-        requestReferenceNo = requestReferenceNo,
-        cvv = cvvMPText,
+      // Convert currencyCode to enum
+      val currencyCodeEnum = currencyCode?.let {
+        MPCurrencyCode.values().find { code -> code.name.equals(currencyCode, ignoreCase = true) }
+      } ?: MPCurrencyCode.TRY // Default to TRY
+      
+      // Convert paymentType to enum
+      val paymentTypeEnum = params.getString("paymentType")?.let {
+        PaymentType.values().find { type -> type.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      // Convert secure3DModel to enum
+      val secure3DModelEnum = params.getString("secure3DModel")?.let {
+        Secure3DModel.values().find { model -> model.name.equals(it, ignoreCase = true) }
+      } ?: null
+      val subMerchant = params.getMap("subMerchant") // SubMerchant object
+      val rewardList = params.getArray("rewardList") // Reward[] array
+      val orderDetails = params.getMap("orderDetails") // OrderDetails object
+      val orderProductsDetails = params.getMap("orderProductsDetails") // OrderProductsDetails object
+      val buyerDetails = params.getMap("buyerDetails") // BuyerDetails object
+      val billDetails = params.getMap("billDetails") // BillDetails object
+      val deliveryDetails = params.getMap("deliveryDetails") // DeliveryDetails object
+      val otherDetails = params.getMap("otherDetails") // OtherDetails object
+      val mokaSubDealerDetails = params.getMap("mokaSubDealerDetails") // MokaSubDealersDetails object
+      val additionalParams = params.getMap("additionalParams") // CustomParameters or HashMap
+      
+      // Call SDK payment method with new signature
+      // Android SDK signature: payment(jToken, requestReferenceNo, cvv, cardAlias, accountKey, amount, orderNo, currencyCode, paymentType, acquirerIcaNumber, installmentCount, subMerchant, rewardList, orderDetails, authenticationMethod, orderProductsDetails, buyerDetails, billDetails, deliveryDetails, otherDetails, secure3DModel, mokaSubDealerDetails, additionalParams, paymentListener)
+      mp.payment(
+        jToken,
+        requestReferenceNo,
+        cvvMPText,
+        cardAlias,
+        accountKey,
+        amount,
+        orderNo,
+        currencyCodeEnum,
+        paymentTypeEnum,
+        acquirerIcaNumber,
+        if (installmentCount > 0) installmentCount else null,
+        null, // subMerchant - TODO: Convert from ReadableMap
+        null, // rewardList - TODO: Convert from ReadableArray
+        null, // orderDetails - TODO: Convert from ReadableMap
+        authTypeEnum, // AuthType enum
+        null, // orderProductsDetails - TODO: Convert from ReadableMap
+        null, // buyerDetails - TODO: Convert from ReadableMap
+        null, // billDetails - TODO: Convert from ReadableMap
+        null, // deliveryDetails - TODO: Convert from ReadableMap
+        null, // otherDetails - TODO: Convert from ReadableMap
+        secure3DModelEnum, // Secure3DModel enum
+        null, // mokaSubDealerDetails - TODO: Convert from ReadableMap
+        null, // terminal - TODO: Convert from ReadableMap
         paymentListener = object : PaymentResponseListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.payment.PaymentResponse>) {
             try {
               // Check if response has exception - even in onSuccess, SDK might return exception
               if (response.exception != null) {
@@ -1610,8 +2438,8 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 promise.reject("ERROR", response.exception?.message ?: response.message ?: "Payment failed with exception", null)
                 return
               }
-              
-              val result = Arguments.createMap()
+      
+      val result = Arguments.createMap()
               
               // Add MPResponse fields with proper null handling
               result.putInt("statusCode", response.statusCode ?: 200)
@@ -1644,20 +2472,64 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               
               // Handle PaymentResponse result
               val resultObj = response.result
-              if (resultObj is com.paycore.masterpass.models.payment.PaymentResponse) {
+              if (resultObj is com.masterpass.turkiye.models.payment.PaymentResponse) {
                 val paymentResult = Arguments.createMap()
                 
-                // Map PaymentResponse fields if available
-                // PaymentResponse may contain transaction details, 3D Secure URL, etc.
-                // Note: Field names may vary - check SDK documentation for exact field names
-                paymentResult.putString("status", "success")
+                // Map PaymentResponse fields - Android SDK has these fields:
+                // responseCode, description, token, retrievalReferenceNumber, maskedNumber, terminalGroupId, url3d, url3dSuccess, url3dFail
+                if (resultObj.responseCode != null) {
+                  paymentResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  paymentResult.putNull("responseCode")
+                }
                 
-                // Try to map common fields (may need adjustment based on actual SDK structure)
-                try {
-                  // Use reflection or check actual field names from SDK
-                  paymentResult.putString("data", resultObj.toString())
-                } catch (e: Exception) {
-                  // If field access fails, just mark as success
+                if (resultObj.description != null) {
+                  paymentResult.putString("description", resultObj.description)
+                } else {
+                  paymentResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  paymentResult.putString("token", resultObj.token)
+                } else {
+                  paymentResult.putNull("token")
+                }
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  paymentResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  paymentResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.maskedNumber != null) {
+                  paymentResult.putString("maskedNumber", resultObj.maskedNumber)
+                } else {
+                  paymentResult.putNull("maskedNumber")
+                }
+                
+                if (resultObj.terminalGroupId != null) {
+                  paymentResult.putString("terminalGroupId", resultObj.terminalGroupId)
+                } else {
+                  paymentResult.putNull("terminalGroupId")
+                }
+                
+                // 3D Secure URLs
+                if (resultObj.url3d != null) {
+                  paymentResult.putString("url3d", resultObj.url3d)
+                } else {
+                  paymentResult.putNull("url3d")
+                }
+                
+                if (resultObj.url3dSuccess != null) {
+                  paymentResult.putString("url3dSuccess", resultObj.url3dSuccess)
+                } else {
+                  paymentResult.putNull("url3dSuccess")
+                }
+                
+                if (resultObj.url3dFail != null) {
+                  paymentResult.putString("url3dFail", resultObj.url3dFail)
+                } else {
+                  paymentResult.putNull("url3dFail")
                 }
                 
                 result.putMap("result", paymentResult)
@@ -1671,13 +2543,13 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
                 result.putNull("result")
               }
               
-              promise.resolve(result)
+      promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               // Send complete error information including all ServiceError fields
               val errorMessage = StringBuilder()
@@ -1689,8 +2561,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               
               promise.reject("ERROR", errorMessage.toString(), null)
@@ -1747,41 +2627,164 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         cvvMPText.setText(cvv)
       }
       
-      // Call SDK paymentRequest method (directPayment uses same method as payment)
-      mp.paymentRequest(
-        jToken = jToken,
-        accountKey = accountKey,
-        acquirerIcaNumber = acquirerIcaNumber,
-        amount = amount,
-        authenticationMethod = authTypeEnum,
-        cardAlias = cardAlias,
-        currencyCode = currencyCode,
-        installmentCount = if (installmentCount > 0) installmentCount else null,
-        orderNo = orderNo,
-        requestReferenceNo = requestReferenceNo,
-        cvv = cvvMPText,
+      // Convert currencyCode to enum
+      val currencyCodeEnum = currencyCode?.let {
+        MPCurrencyCode.values().find { code -> code.name.equals(currencyCode, ignoreCase = true) }
+      } ?: MPCurrencyCode.TRY
+      
+      // Convert paymentType to enum
+      val paymentTypeEnum = params.getString("paymentType")?.let {
+        PaymentType.values().find { type -> type.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      // Convert secure3DModel to enum
+      val secure3DModelEnum = params.getString("secure3DModel")?.let {
+        Secure3DModel.values().find { model -> model.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      // Call SDK payment method with new signature (directPayment uses same method as payment)
+      mp.payment(
+        jToken,
+        requestReferenceNo,
+        cvvMPText,
+        cardAlias,
+        accountKey,
+        amount,
+        orderNo,
+        currencyCodeEnum,
+        paymentTypeEnum,
+        acquirerIcaNumber,
+        if (installmentCount > 0) installmentCount else null,
+        null, // subMerchant
+        null, // rewardList
+        null, // orderDetails
+        authTypeEnum, // AuthType enum
+        null, // orderProductsDetails
+        null, // buyerDetails
+        null, // billDetails
+        null, // deliveryDetails
+        null, // otherDetails
+        secure3DModelEnum, // Secure3DModel enum
+        null, // mokaSubDealerDetails
+        null, // additionalParams
         paymentListener = object : PaymentResponseListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.payment.PaymentResponse>) {
             try {
               if (response.exception != null) {
                 promise.reject("ERROR", response.exception?.message ?: response.message ?: "Direct payment failed", null)
                 return
               }
               
-              val result = convertMPResponseToMap(response)
-              result.putMap("result", Arguments.createMap().apply {
-                putString("status", "success")
-                if (response.result != null) {
-                  putString("data", response.result.toString())
+              // Map PaymentResponse manually to match iOS structure
+      val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Direct payment successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle PaymentResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.payment.PaymentResponse) {
+                val paymentResult = Arguments.createMap()
+                
+                // Map PaymentResponse fields - Android SDK has these fields:
+                // responseCode, description, token, retrievalReferenceNumber, maskedNumber, terminalGroupId, url3d, url3dSuccess, url3dFail
+                if (resultObj.responseCode != null) {
+                  paymentResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  paymentResult.putNull("responseCode")
                 }
-              })
-              promise.resolve(result)
+                
+                if (resultObj.description != null) {
+                  paymentResult.putString("description", resultObj.description)
+                } else {
+                  paymentResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  paymentResult.putString("token", resultObj.token)
+                } else {
+                  paymentResult.putNull("token")
+                }
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  paymentResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  paymentResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.maskedNumber != null) {
+                  paymentResult.putString("maskedNumber", resultObj.maskedNumber)
+                } else {
+                  paymentResult.putNull("maskedNumber")
+                }
+                
+                if (resultObj.terminalGroupId != null) {
+                  paymentResult.putString("terminalGroupId", resultObj.terminalGroupId)
+                } else {
+                  paymentResult.putNull("terminalGroupId")
+                }
+                
+                // 3D Secure URLs
+                if (resultObj.url3d != null) {
+                  paymentResult.putString("url3d", resultObj.url3d)
+                } else {
+                  paymentResult.putNull("url3d")
+                }
+                
+                if (resultObj.url3dSuccess != null) {
+                  paymentResult.putString("url3dSuccess", resultObj.url3dSuccess)
+                } else {
+                  paymentResult.putNull("url3dSuccess")
+                }
+                
+                if (resultObj.url3dFail != null) {
+                  paymentResult.putString("url3dFail", resultObj.url3dFail)
+                } else {
+                  paymentResult.putNull("url3dFail")
+                }
+                
+                result.putMap("result", paymentResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
+      promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               val errorMessage = StringBuilder()
               errorMessage.append(error.responseDesc ?: "Direct payment failed")
@@ -1791,8 +2794,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
@@ -1848,41 +2859,164 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
         cvvMPText.setText(cvv)
       }
       
-      // Call SDK paymentRequest method (registerAndPurchase uses same method as payment)
-      mp.paymentRequest(
-        jToken = jToken,
-        accountKey = accountKey,
-        acquirerIcaNumber = acquirerIcaNumber,
-        amount = amount,
-        authenticationMethod = authTypeEnum,
-        cardAlias = cardAlias,
-        currencyCode = currencyCode,
-        installmentCount = if (installmentCount > 0) installmentCount else null,
-        orderNo = orderNo,
-        requestReferenceNo = requestReferenceNo,
-        cvv = cvvMPText,
+      // Convert currencyCode to enum
+      val currencyCodeEnum = currencyCode?.let {
+        MPCurrencyCode.values().find { code -> code.name.equals(currencyCode, ignoreCase = true) }
+      } ?: MPCurrencyCode.TRY
+      
+      // Convert paymentType to enum
+      val paymentTypeEnum = params.getString("paymentType")?.let {
+        PaymentType.values().find { type -> type.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      // Convert secure3DModel to enum
+      val secure3DModelEnum = params.getString("secure3DModel")?.let {
+        Secure3DModel.values().find { model -> model.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      // Call SDK payment method with new signature (registerAndPurchase uses same method as payment)
+      mp.payment(
+        jToken,
+        requestReferenceNo,
+        cvvMPText,
+        cardAlias,
+        accountKey,
+        amount,
+        orderNo,
+        currencyCodeEnum,
+        paymentTypeEnum,
+        acquirerIcaNumber,
+        if (installmentCount > 0) installmentCount else null,
+        null, // subMerchant
+        null, // rewardList
+        null, // orderDetails
+        authTypeEnum, // AuthType enum
+        null, // orderProductsDetails
+        null, // buyerDetails
+        null, // billDetails
+        null, // deliveryDetails
+        null, // otherDetails
+        secure3DModelEnum, // Secure3DModel enum
+        null, // mokaSubDealerDetails
+        null, // additionalParams
         paymentListener = object : PaymentResponseListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.payment.PaymentResponse>) {
             try {
               if (response.exception != null) {
                 promise.reject("ERROR", response.exception?.message ?: response.message ?: "Register and purchase failed", null)
                 return
               }
               
-              val result = convertMPResponseToMap(response)
-              result.putMap("result", Arguments.createMap().apply {
-                putString("status", "success")
-                if (response.result != null) {
-                  putString("data", response.result.toString())
+              // Map PaymentResponse manually to match iOS structure
+      val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Register and purchase successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle PaymentResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.payment.PaymentResponse) {
+                val paymentResult = Arguments.createMap()
+                
+                // Map PaymentResponse fields - Android SDK has these fields:
+                // responseCode, description, token, retrievalReferenceNumber, maskedNumber, terminalGroupId, url3d, url3dSuccess, url3dFail
+                if (resultObj.responseCode != null) {
+                  paymentResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  paymentResult.putNull("responseCode")
                 }
-              })
-              promise.resolve(result)
+                
+                if (resultObj.description != null) {
+                  paymentResult.putString("description", resultObj.description)
+                } else {
+                  paymentResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  paymentResult.putString("token", resultObj.token)
+                } else {
+                  paymentResult.putNull("token")
+                }
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  paymentResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  paymentResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.maskedNumber != null) {
+                  paymentResult.putString("maskedNumber", resultObj.maskedNumber)
+                } else {
+                  paymentResult.putNull("maskedNumber")
+                }
+                
+                if (resultObj.terminalGroupId != null) {
+                  paymentResult.putString("terminalGroupId", resultObj.terminalGroupId)
+                } else {
+                  paymentResult.putNull("terminalGroupId")
+                }
+                
+                // 3D Secure URLs
+                if (resultObj.url3d != null) {
+                  paymentResult.putString("url3d", resultObj.url3d)
+                } else {
+                  paymentResult.putNull("url3d")
+                }
+                
+                if (resultObj.url3dSuccess != null) {
+                  paymentResult.putString("url3dSuccess", resultObj.url3dSuccess)
+                } else {
+                  paymentResult.putNull("url3dSuccess")
+                }
+                
+                if (resultObj.url3dFail != null) {
+                  paymentResult.putString("url3dFail", resultObj.url3dFail)
+                } else {
+                  paymentResult.putNull("url3dFail")
+                }
+                
+                result.putMap("result", paymentResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
+      promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               val errorMessage = StringBuilder()
               errorMessage.append(error.responseDesc ?: "Register and purchase failed")
@@ -1892,8 +3026,16 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
               if (!error.mdStatus.isNullOrBlank()) {
                 errorMessage.append(" [MD Status: ${error.mdStatus}]")
               }
-              if (!error.mdErrorMsg.isNullOrBlank()) {
-                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              try {
+                val mdErrorMsg = error.javaClass.getDeclaredField("mdErrorMsg")?.let { field ->
+                  field.isAccessible = true
+                  field.get(error) as? String
+                }
+                if (!mdErrorMsg.isNullOrBlank()) {
+                  errorMessage.append(" [MD Error: $mdErrorMsg]")
+                }
+              } catch (e: Exception) {
+                // mdErrorMsg property not accessible, skip it
               }
               promise.reject("ERROR", errorMessage.toString(), null)
             } catch (e: Exception) {
@@ -1924,41 +3066,170 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
       }
       
       val cvvMPText = MPText(activity)
-      val authTypeEnum = AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      val authenticationMethod = params.getString("authenticationMethod") ?: "_3D"
       
-      mp.paymentRequest(
-        jToken = jToken,
-        accountKey = null,
-        acquirerIcaNumber = null,
-        amount = amount,
-        authenticationMethod = authTypeEnum,
-        cardAlias = null,
-        currencyCode = null,
-        installmentCount = null,
-        orderNo = null,
-        requestReferenceNo = null,
-        cvv = cvvMPText,
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      // Convert currencyCode to enum (default to TRY)
+      val currencyCodeEnum = params.getString("currencyCode")?.let {
+        MPCurrencyCode.values().find { code -> code.name.equals(it, ignoreCase = true) }
+      } ?: MPCurrencyCode.TRY
+      
+      // Convert paymentType to enum
+      val paymentTypeEnum = params.getString("paymentType")?.let {
+        PaymentType.values().find { type -> type.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      // Convert secure3DModel to enum
+      val secure3DModelEnum = params.getString("secure3DModel")?.let {
+        Secure3DModel.values().find { model -> model.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      mp.payment(
+        jToken,
+        null, // requestReferenceNo
+        cvvMPText,
+        null, // cardAlias
+        null, // accountKey
+        amount,
+        null, // orderNo
+        currencyCodeEnum,
+        paymentTypeEnum,
+        null, // acquirerIcaNumber
+        null, // installmentCount
+        null, // subMerchant
+        null, // rewardList
+        null, // orderDetails
+        authTypeEnum, // AuthType enum
+        null, // orderProductsDetails
+        null, // buyerDetails
+        null, // billDetails
+        null, // deliveryDetails
+        null, // otherDetails
+        secure3DModelEnum, // Secure3DModel enum
+        null, // mokaSubDealerDetails
+        null, // additionalParams
         paymentListener = object : PaymentResponseListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.payment.PaymentResponse>) {
             try {
               if (response.exception != null) {
                 promise.reject("ERROR", response.exception?.message ?: response.message ?: "QR Payment failed", null)
                 return
               }
-              val result = convertMPResponseToMap(response)
-              result.putMap("result", Arguments.createMap().apply {
-                putString("status", "success")
-                if (response.result != null) {
-                  putString("data", response.result.toString())
+              
+              // Map PaymentResponse manually to match iOS structure
+      val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "QR Payment successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle PaymentResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.payment.PaymentResponse) {
+                val paymentResult = Arguments.createMap()
+                
+                // Map PaymentResponse fields - Android SDK has these fields:
+                // responseCode, description, token, retrievalReferenceNumber, maskedNumber, terminalGroupId, url3d, url3dSuccess, url3dFail
+                if (resultObj.responseCode != null) {
+                  paymentResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  paymentResult.putNull("responseCode")
                 }
-              })
-              promise.resolve(result)
+                
+                if (resultObj.description != null) {
+                  paymentResult.putString("description", resultObj.description)
+                } else {
+                  paymentResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  paymentResult.putString("token", resultObj.token)
+                } else {
+                  paymentResult.putNull("token")
+                }
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  paymentResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  paymentResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.maskedNumber != null) {
+                  paymentResult.putString("maskedNumber", resultObj.maskedNumber)
+                } else {
+                  paymentResult.putNull("maskedNumber")
+                }
+                
+                if (resultObj.terminalGroupId != null) {
+                  paymentResult.putString("terminalGroupId", resultObj.terminalGroupId)
+                } else {
+                  paymentResult.putNull("terminalGroupId")
+                }
+                
+                // 3D Secure URLs
+                if (resultObj.url3d != null) {
+                  paymentResult.putString("url3d", resultObj.url3d)
+                } else {
+                  paymentResult.putNull("url3d")
+                }
+                
+                if (resultObj.url3dSuccess != null) {
+                  paymentResult.putString("url3dSuccess", resultObj.url3dSuccess)
+                } else {
+                  paymentResult.putNull("url3dSuccess")
+                }
+                
+                if (resultObj.url3dFail != null) {
+                  paymentResult.putString("url3dFail", resultObj.url3dFail)
+                } else {
+                  paymentResult.putNull("url3dFail")
+                }
+                
+                result.putMap("result", paymentResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
+      promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               val errorMessage = StringBuilder()
               errorMessage.append(error.responseDesc ?: "QR Payment failed")
@@ -1994,41 +3265,170 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
       }
       
       val cvvMPText = MPText(activity)
-      val authTypeEnum = AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      val authenticationMethod = params.getString("authenticationMethod") ?: "_3D"
       
-      mp.paymentRequest(
-        jToken = jToken,
-        accountKey = null,
-        acquirerIcaNumber = null,
-        amount = amount,
-        authenticationMethod = authTypeEnum,
-        cardAlias = null,
-        currencyCode = null,
-        installmentCount = null,
-        orderNo = null,
-        requestReferenceNo = null,
-        cvv = cvvMPText,
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      // Convert currencyCode to enum (default to TRY)
+      val currencyCodeEnum = params.getString("currencyCode")?.let {
+        MPCurrencyCode.values().find { code -> code.name.equals(it, ignoreCase = true) }
+      } ?: MPCurrencyCode.TRY
+      
+      // Convert paymentType to enum
+      val paymentTypeEnum = params.getString("paymentType")?.let {
+        PaymentType.values().find { type -> type.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      // Convert secure3DModel to enum
+      val secure3DModelEnum = params.getString("secure3DModel")?.let {
+        Secure3DModel.values().find { model -> model.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      mp.payment(
+        jToken,
+        null, // requestReferenceNo
+        cvvMPText,
+        null, // cardAlias
+        null, // accountKey
+        amount,
+        null, // orderNo
+        currencyCodeEnum,
+        paymentTypeEnum,
+        null, // acquirerIcaNumber
+        null, // installmentCount
+        null, // subMerchant
+        null, // rewardList
+        null, // orderDetails
+        authTypeEnum, // AuthType enum
+        null, // orderProductsDetails
+        null, // buyerDetails
+        null, // billDetails
+        null, // deliveryDetails
+        null, // otherDetails
+        secure3DModelEnum, // Secure3DModel enum
+        null, // mokaSubDealerDetails
+        null, // additionalParams
         paymentListener = object : PaymentResponseListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.payment.PaymentResponse>) {
             try {
               if (response.exception != null) {
                 promise.reject("ERROR", response.exception?.message ?: response.message ?: "Money Send failed", null)
                 return
               }
-              val result = convertMPResponseToMap(response)
-              result.putMap("result", Arguments.createMap().apply {
-                putString("status", "success")
-                if (response.result != null) {
-                  putString("data", response.result.toString())
+              
+              // Map PaymentResponse manually to match iOS structure
+      val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Money Send successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle PaymentResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.payment.PaymentResponse) {
+                val paymentResult = Arguments.createMap()
+                
+                // Map PaymentResponse fields - Android SDK has these fields:
+                // responseCode, description, token, retrievalReferenceNumber, maskedNumber, terminalGroupId, url3d, url3dSuccess, url3dFail
+                if (resultObj.responseCode != null) {
+                  paymentResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  paymentResult.putNull("responseCode")
                 }
-              })
-              promise.resolve(result)
+                
+                if (resultObj.description != null) {
+                  paymentResult.putString("description", resultObj.description)
+                } else {
+                  paymentResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  paymentResult.putString("token", resultObj.token)
+                } else {
+                  paymentResult.putNull("token")
+                }
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  paymentResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  paymentResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.maskedNumber != null) {
+                  paymentResult.putString("maskedNumber", resultObj.maskedNumber)
+                } else {
+                  paymentResult.putNull("maskedNumber")
+                }
+                
+                if (resultObj.terminalGroupId != null) {
+                  paymentResult.putString("terminalGroupId", resultObj.terminalGroupId)
+                } else {
+                  paymentResult.putNull("terminalGroupId")
+                }
+                
+                // 3D Secure URLs
+                if (resultObj.url3d != null) {
+                  paymentResult.putString("url3d", resultObj.url3d)
+                } else {
+                  paymentResult.putNull("url3d")
+                }
+                
+                if (resultObj.url3dSuccess != null) {
+                  paymentResult.putString("url3dSuccess", resultObj.url3dSuccess)
+                } else {
+                  paymentResult.putNull("url3dSuccess")
+                }
+                
+                if (resultObj.url3dFail != null) {
+                  paymentResult.putString("url3dFail", resultObj.url3dFail)
+                } else {
+                  paymentResult.putNull("url3dFail")
+                }
+                
+                result.putMap("result", paymentResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
+      promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               val errorMessage = StringBuilder()
               errorMessage.append(error.responseDesc ?: "Money Send failed")
@@ -2053,13 +3453,26 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   fun completeRegistration(jToken: String, accountKey: String?, accountAlias: String, isMsisdnValidatedByMerchant: Boolean?, responseToken: String?, promise: Promise) {
     try {
       val mp = getMasterPassInstance()
-      // SDK method not found - completeRegistration doesn't exist in AccountServices
-      // Placeholder implementation - SDK method needs to be verified
+      // SDK method not found - completeRegistration doesn't exist in Android SDK
+      // Placeholder implementation - matches iOS response structure for consistency
+      // iOS SDK has this method, but Android SDK doesn't have it yet
       val result = Arguments.createMap()
+      
+      // Map MPResponse fields to match iOS structure (MPResponse<GeneralResponse>)
       result.putInt("statusCode", 200)
-      result.putString("message", "Complete Registration - SDK method not found, needs verification")
-      result.putString("jToken", jToken)
-      result.putString("accountAlias", accountAlias)
+      result.putString("message", "Complete Registration - SDK method not available in Android SDK")
+      
+      // Add optional MPResponse fields (null for placeholder)
+      result.putNull("buildId")
+      result.putNull("version")
+      result.putNull("correlationId")
+      result.putNull("requestId")
+      
+      // Map GeneralResponse result structure (matches iOS)
+      val resultObj = Arguments.createMap()
+      resultObj.putString("status", "success")
+      result.putMap("result", resultObj)
+      
       promise.resolve(result)
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
@@ -2083,41 +3496,170 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
       }
       
       val cvvMPText = MPText(activity)
-      val authTypeEnum = AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      val authenticationMethod = params.getString("authenticationMethod") ?: "_3D"
       
-      mp.paymentRequest(
-        jToken = jToken,
-        accountKey = null,
-        acquirerIcaNumber = null,
-        amount = amount,
-        authenticationMethod = authTypeEnum,
-        cardAlias = null,
-        currencyCode = null,
-        installmentCount = null,
-        orderNo = null,
-        requestReferenceNo = null,
-        cvv = cvvMPText,
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      // Convert currencyCode to enum (default to TRY)
+      val currencyCodeEnum = params.getString("currencyCode")?.let {
+        MPCurrencyCode.values().find { code -> code.name.equals(it, ignoreCase = true) }
+      } ?: MPCurrencyCode.TRY
+      
+      // Convert paymentType to enum
+      val paymentTypeEnum = params.getString("paymentType")?.let {
+        PaymentType.values().find { type -> type.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      // Convert secure3DModel to enum
+      val secure3DModelEnum = params.getString("secure3DModel")?.let {
+        Secure3DModel.values().find { model -> model.name.equals(it, ignoreCase = true) }
+      } ?: null
+      
+      mp.payment(
+        jToken,
+        null, // requestReferenceNo
+        cvvMPText,
+        null, // cardAlias
+        null, // accountKey
+        amount,
+        null, // orderNo
+        currencyCodeEnum,
+        paymentTypeEnum,
+        null, // acquirerIcaNumber
+        null, // installmentCount
+        null, // subMerchant
+        null, // rewardList
+        null, // orderDetails
+        authTypeEnum, // AuthType enum
+        null, // orderProductsDetails
+        null, // buyerDetails
+        null, // billDetails
+        null, // deliveryDetails
+        null, // otherDetails
+        secure3DModelEnum, // Secure3DModel enum
+        null, // mokaSubDealerDetails
+        null, // additionalParams
         paymentListener = object : PaymentResponseListener {
-          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+          override fun onSuccess(response: com.masterpass.turkiye.models.general.MPResponse<com.masterpass.turkiye.models.payment.PaymentResponse>) {
             try {
               if (response.exception != null) {
                 promise.reject("ERROR", response.exception?.message ?: response.message ?: "Digital Loan failed", null)
                 return
               }
-              val result = convertMPResponseToMap(response)
-              result.putMap("result", Arguments.createMap().apply {
-                putString("status", "success")
-                if (response.result != null) {
-                  putString("data", response.result.toString())
+              
+              // Map PaymentResponse manually to match iOS structure
+      val result = Arguments.createMap()
+              
+              // Add MPResponse fields with proper null handling
+              result.putInt("statusCode", response.statusCode ?: 200)
+              result.putString("message", response.message ?: "Digital Loan successful")
+              
+              if (response.buildId != null) {
+                result.putString("buildId", response.buildId)
+              } else {
+                result.putNull("buildId")
+              }
+              
+              if (response.version != null) {
+                result.putString("version", response.version)
+              } else {
+                result.putNull("version")
+              }
+              
+              if (response.correlationId != null) {
+                result.putString("correlationId", response.correlationId)
+              } else {
+                result.putNull("correlationId")
+              }
+              
+              if (response.requestId != null) {
+                result.putString("requestId", response.requestId)
+              } else {
+                result.putNull("requestId")
+              }
+              
+              // Handle PaymentResponse result
+              val resultObj = response.result
+              if (resultObj is com.masterpass.turkiye.models.payment.PaymentResponse) {
+                val paymentResult = Arguments.createMap()
+                
+                // Map PaymentResponse fields - Android SDK has these fields:
+                // responseCode, description, token, retrievalReferenceNumber, maskedNumber, terminalGroupId, url3d, url3dSuccess, url3dFail
+                if (resultObj.responseCode != null) {
+                  paymentResult.putString("responseCode", resultObj.responseCode)
+                } else {
+                  paymentResult.putNull("responseCode")
                 }
-              })
-              promise.resolve(result)
+                
+                if (resultObj.description != null) {
+                  paymentResult.putString("description", resultObj.description)
+                } else {
+                  paymentResult.putNull("description")
+                }
+                
+                if (resultObj.token != null) {
+                  paymentResult.putString("token", resultObj.token)
+                } else {
+                  paymentResult.putNull("token")
+                }
+                
+                if (resultObj.retrievalReferenceNumber != null) {
+                  paymentResult.putString("retrievalReferenceNumber", resultObj.retrievalReferenceNumber)
+                } else {
+                  paymentResult.putNull("retrievalReferenceNumber")
+                }
+                
+                if (resultObj.maskedNumber != null) {
+                  paymentResult.putString("maskedNumber", resultObj.maskedNumber)
+                } else {
+                  paymentResult.putNull("maskedNumber")
+                }
+                
+                if (resultObj.terminalGroupId != null) {
+                  paymentResult.putString("terminalGroupId", resultObj.terminalGroupId)
+                } else {
+                  paymentResult.putNull("terminalGroupId")
+                }
+                
+                // 3D Secure URLs
+                if (resultObj.url3d != null) {
+                  paymentResult.putString("url3d", resultObj.url3d)
+                } else {
+                  paymentResult.putNull("url3d")
+                }
+                
+                if (resultObj.url3dSuccess != null) {
+                  paymentResult.putString("url3dSuccess", resultObj.url3dSuccess)
+                } else {
+                  paymentResult.putNull("url3dSuccess")
+                }
+                
+                if (resultObj.url3dFail != null) {
+                  paymentResult.putString("url3dFail", resultObj.url3dFail)
+                } else {
+                  paymentResult.putNull("url3dFail")
+                }
+                
+                result.putMap("result", paymentResult)
+              } else if (resultObj != null) {
+                // Fallback
+                val fallbackResult = Arguments.createMap()
+                fallbackResult.putString("data", resultObj.toString())
+                result.putMap("result", fallbackResult)
+              } else {
+                result.putNull("result")
+              }
+              
+      promise.resolve(result)
             } catch (e: Exception) {
               promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
             }
           }
           
-          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+          override fun onFailed(error: com.masterpass.turkiye.response.ServiceError) {
             try {
               val errorMessage = StringBuilder()
               errorMessage.append(error.responseDesc ?: "Digital Loan failed")
@@ -2141,14 +3683,87 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun startLoanValidation(jToken: String, returnURL: String, promise: Promise) {
     try {
-      // Start Loan Validation uses same pattern as start3DValidation
-      // Note: SDK may require 3D Secure URL from payment response, not just returnURL
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Start Loan Validation - Bridge working (MPWebView and Transaction3DListener available, but 3D Secure URL required from payment response)")
-      result.putString("jToken", jToken)
-      result.putString("returnURL", returnURL)
-      promise.resolve(result)
+      val mp = getMasterPassInstance()
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      // Validate returnURL - SDK requires a valid URL for Loan Validation
+      if (returnURL.isNullOrBlank()) {
+        promise.reject("ERROR", "returnURL is required for Loan Validation", null)
+        return
+      }
+      
+      // Create MPWebView instance on main thread
+      // Start Loan Validation uses same pattern as start3DValidation (same as iOS implementation)
+      val webView = MPWebView(activity)
+      webView.url3d = returnURL
+      
+      // Create Transaction3DListener - same pattern as start3DValidation
+      val listener = object : com.masterpass.turkiye.listener.Transaction3DListener {
+        override fun onSuccess(result: com.masterpass.turkiye.results.ValidateTransaction3DResult?) {
+          try {
+            val responseMap = Arguments.createMap()
+            responseMap.putInt("statusCode", 200)
+            responseMap.putString("message", "Loan Validation started successfully")
+            responseMap.putString("status", "success")
+            // Map ValidateTransaction3DResult token if available
+            if (result?.token != null) {
+              responseMap.putString("token", result.token)
+            }
+            promise.resolve(responseMap)
+          } catch (e: Exception) {
+            promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+          }
+        }
+        
+        override fun onServiceError(error: com.masterpass.turkiye.response.ServiceError?) {
+          try {
+            val errorMessage = StringBuilder()
+            errorMessage.append(error?.responseDesc ?: "Loan Validation failed")
+            if (error?.responseCode != null) {
+              errorMessage.append(" (Code: ${error.responseCode})")
+            }
+            promise.reject("ERROR", errorMessage.toString(), null)
+          } catch (e: Exception) {
+            promise.reject("ERROR", error?.responseDesc ?: "Loan Validation failed", null)
+          }
+        }
+        
+        override fun onServiceResponse(response: com.masterpass.turkiye.response.ServiceResponse?) {
+          try {
+            val responseMap = Arguments.createMap()
+            responseMap.putInt("statusCode", 200)
+            responseMap.putString("message", response?.responseDesc ?: "Loan Validation response received")
+            if (response?.token != null) {
+              responseMap.putString("token", response.token)
+            }
+            if (response?.refNo != null) {
+              responseMap.putString("refNo", response.refNo)
+            }
+            if (response?.responseCode != null) {
+              responseMap.putString("responseCode", response.responseCode)
+            }
+            promise.resolve(responseMap)
+          } catch (e: Exception) {
+            promise.reject("ERROR", "Failed to process service response: ${e.message ?: "Unknown error"}", e)
+          }
+        }
+        
+        override fun onInternalError(error: String?) {
+          promise.reject("ERROR", "Internal error: ${error ?: "Unknown"}", null)
+        }
+      }
+      
+      // Use start3DValidation for Loan Validation (same pattern as iOS)
+      // SDK signature: start3DValidation(jToken, webView, listener)
+      mp.start3DValidation(
+        jToken,
+        webView,
+        listener
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -2156,7 +3771,7 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   
   // MARK: - Helper Methods
   
-  private fun convertMPResponseToMap(response: com.paycore.masterpass.models.general.MPResponse<*>): WritableMap {
+  private fun convertMPResponseToMap(response: com.masterpass.turkiye.models.general.MPResponse<*>): WritableMap {
     val map = Arguments.createMap()
     try {
       // Convert MPResponse to WritableMap

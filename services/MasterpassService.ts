@@ -1,4 +1,4 @@
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import { MasterpassInitializeParams } from '../interfaces/MasterpassInitializeParams.interface';
 import { MasterpassAddCardParams } from '../interfaces/MasterpassAddCardParams.interface';
 import { MasterpassResponse } from '../interfaces/MasterpassResponse.interface';
@@ -21,13 +21,29 @@ class MasterpassService {
     }
 
     try {
-      const response = await MasterpassModule.initialize(
-        params.merchantId,
-        params.terminalGroupId || null,
-        params.language || null,
-        params.url,
-        params.cipherText || null,
-      );
+      let response: any;
+
+      // Platform-specific initialization
+      if (Platform.OS === 'ios') {
+        // iOS SDK signature: MasterPass.initialize(merchantId: Int, terminalGroupId: String?, language: String?, url: String, cipherText: String?)
+        response = await MasterpassModule.initialize(
+          params.merchantId,
+          params.terminalGroupId || null,
+          params.language || null,
+          params.url,
+          params.cipherText || null,
+        );
+      } else {
+        // Android SDK signature: MasterPass(mId: Long, tGId: String, lan: String, verbose: Boolean, bUrl: String, mSecKey: String?)
+        response = await MasterpassModule.initialize(
+          params.merchantId,
+          params.terminalGroupId || null,
+          params.language || null,
+          params.url,
+          params.verbose ?? false,
+          params.merchantSecretKey || null,
+        );
+      }
 
       return response as MasterpassResponse;
     } catch (error) {

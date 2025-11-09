@@ -4,3 +4,67 @@ extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autoli
 rootProject.name = 'hkmaster'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')
+
+// GitHub Packages authentication
+// SECURITY: Token should be set via environment variables or local.properties (never commit to Git)
+// Option 1 (Recommended): Environment variables
+//   export GITHUB_USERNAME=your_username
+//   export GITHUB_TOKEN=ghp_your_token
+// Option 2: local.properties (already in .gitignore)
+//   github.username=your_username
+//   github.token=ghp_your_token
+
+def getGitHubUsername() {
+    // Priority: Environment variable > local.properties > empty
+    def envUsername = System.getenv("GITHUB_USERNAME")
+    if (envUsername) return envUsername
+    
+    try {
+        def localProperties = new Properties()
+        def localPropertiesFile = new File(settingsDir, 'local.properties')
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.withInputStream { localProperties.load(it) }
+            def username = localProperties.getProperty("github.username")
+            if (username) return username.trim()
+        }
+    } catch (Exception e) {
+        println("Warning: Could not read github.username from local.properties: ${e.message}")
+    }
+    return ""
+}
+
+def getGitHubToken() {
+    // Priority: Environment variable > local.properties > empty
+    def envToken = System.getenv("GITHUB_TOKEN")
+    if (envToken) return envToken
+    
+    try {
+        def localProperties = new Properties()
+        def localPropertiesFile = new File(settingsDir, 'local.properties')
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.withInputStream { localProperties.load(it) }
+            def token = localProperties.getProperty("github.token")
+            if (token) return token.trim()
+        }
+    } catch (Exception e) {
+        println("Warning: Could not read github.token from local.properties: ${e.message}")
+    }
+    return ""
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        // GitHub Packages repository for Masterpass Android SDK (private repository)
+        maven {
+            url 'https://maven.pkg.github.com/MasterpassTurkiye/Masterpass-android-sdk'
+            credentials {
+                username getGitHubUsername()
+                password getGitHubToken()
+            }
+        }
+        maven { url = uri("https://jitpack.io") }
+    }
+}

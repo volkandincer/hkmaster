@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { MasterpassButton } from '../components/MasterpassButton.component';
 import { MasterpassResponseDisplay } from '../components/MasterpassResponseDisplay.component';
 import MasterpassService from '../services/MasterpassService';
@@ -50,10 +50,11 @@ const generateRandomRRN = (): string => {
 // Default config values
 const DEFAULT_CONFIG = {
   merchantId: 123456,
-  terminalGroupId: undefined,
+  terminalGroupId: '5575197921009055554235', // Required for Android SDK - cannot be empty
   language: 'tr-TR',
   url: 'https://mp-test-sdk.masterpassturkiye.com/', // Trailing slash required for SDK to append paths correctly
-  cipherText: undefined,
+  verbose: false, // Android only
+  merchantSecretKey: undefined, // Android only (optional)
 };
 
 export const MasterpassTestScreen: React.FC = () => {
@@ -72,7 +73,8 @@ export const MasterpassTestScreen: React.FC = () => {
         terminalGroupId: DEFAULT_CONFIG.terminalGroupId,
         language: DEFAULT_CONFIG.language,
         url: DEFAULT_CONFIG.url,
-        cipherText: DEFAULT_CONFIG.cipherText,
+        verbose: DEFAULT_CONFIG.verbose,
+        merchantSecretKey: DEFAULT_CONFIG.merchantSecretKey,
       });
 
       setResponse(result);
@@ -80,6 +82,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -124,6 +127,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -149,6 +153,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -178,6 +183,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -205,6 +211,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -234,6 +241,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -261,6 +269,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -290,6 +299,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -315,6 +325,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -338,6 +349,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -363,6 +375,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -404,6 +417,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -444,6 +458,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -484,6 +499,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -508,6 +524,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -534,6 +551,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -563,6 +581,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -587,6 +606,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -611,6 +631,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -647,6 +668,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -681,6 +703,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -713,6 +736,7 @@ export const MasterpassTestScreen: React.FC = () => {
       const errorMessage =
         err instanceof Error ? err.message : 'Bilinmeyen hata';
       setError(errorMessage);
+      Alert.alert('Hata', errorMessage);
     } finally {
       setLoading(false);
     }
