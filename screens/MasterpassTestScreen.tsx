@@ -409,6 +409,315 @@ export const MasterpassTestScreen: React.FC = () => {
     }
   }, []);
 
+  const handleDirectPayment = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomCardAlias = `card-${generateRandomString(8)}`;
+      const randomAmount = (generateRandomNumber(10, 1000) * 100).toString();
+      const randomOrderNo = `order-${generateRandomString(10)}`;
+      const randomRRN = generateRandomRRN();
+      const randomCVV = generateRandomCVV();
+      const currencyCode = 'TRY';
+      const paymentType = 'normal';
+      const authenticationMethod = 'SMS_OTP';
+
+      const result = await MasterpassService.directPayment({
+        jToken: randomJToken,
+        accountKey: randomAccountKey,
+        cardAlias: randomCardAlias,
+        amount: randomAmount,
+        orderNo: randomOrderNo,
+        rrn: randomRRN,
+        cvv: randomCVV,
+        currencyCode: currencyCode,
+        paymentType: paymentType,
+        authenticationMethod: authenticationMethod,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleRegisterAndPurchase = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomCardAlias = `card-${generateRandomString(8)}`;
+      const randomAmount = (generateRandomNumber(10, 1000) * 100).toString();
+      const randomOrderNo = `order-${generateRandomString(10)}`;
+      const randomRRN = generateRandomRRN();
+      const randomCVV = generateRandomCVV();
+      const currencyCode = 'TRY';
+      const paymentType = 'normal';
+      const authenticationMethod = 'SMS_OTP';
+
+      const result = await MasterpassService.registerAndPurchase({
+        jToken: randomJToken,
+        accountKey: randomAccountKey,
+        cardAlias: randomCardAlias,
+        amount: randomAmount,
+        orderNo: randomOrderNo,
+        rrn: randomRRN,
+        cvv: randomCVV,
+        currencyCode: currencyCode,
+        paymentType: paymentType,
+        authenticationMethod: authenticationMethod,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleQrPayment = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAmount = (generateRandomNumber(10, 1000) * 100).toString();
+
+      const result = await MasterpassService.qrPayment({
+        jToken: randomJToken,
+        amount: randomAmount,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleMoneySend = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAmount = (generateRandomNumber(10, 1000) * 100).toString();
+      const moneySendType = 'P2P'; // Default type
+
+      const result = await MasterpassService.moneySend({
+        jToken: randomJToken,
+        moneySendType: moneySendType,
+        amount: randomAmount,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleCompleteRegistration = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomAccountAlias = `alias-${generateRandomString(10)}`;
+      const randomResponseToken = `response-${generateRandomString(20)}`;
+
+      const result = await MasterpassService.completeRegistration({
+        jToken: randomJToken,
+        accountKey: randomAccountKey,
+        accountAlias: randomAccountAlias,
+        isMsisdnValidatedByMerchant: false,
+        responseToken: randomResponseToken,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleDigitalLoan = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAmount = (generateRandomNumber(1000, 10000) * 100).toString();
+
+      const result = await MasterpassService.digitalLoan({
+        jToken: randomJToken,
+        amount: randomAmount,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleStartLoanValidation = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomReturnURL = `https://example.com/loan/return?token=${generateRandomString(12)}`;
+
+      const result = await MasterpassService.startLoanValidation(
+        randomJToken,
+        randomReturnURL,
+      );
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleRecurringOrderRegister = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomCardAlias = `card-${generateRandomString(8)}`;
+      const randomProductId = `product-${generateRandomString(10)}`;
+      const randomAmountLimit = (generateRandomNumber(100, 1000) * 100).toString();
+      const expireDate = '12/30'; // MM/YY format
+      const authenticationMethod = 'SMS_OTP';
+      const randomRRN = generateRandomRRN();
+
+      const result = await MasterpassService.recurringOrderRegister({
+        jToken: randomJToken,
+        accountKey: randomAccountKey,
+        cardAlias: randomCardAlias,
+        productId: randomProductId,
+        amountLimit: randomAmountLimit,
+        expireDate: expireDate,
+        authenticationMethod: authenticationMethod,
+        rrn: randomRRN,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleRecurringOrderUpdate = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomCardAlias = `card-${generateRandomString(8)}`;
+      const randomProductId = `product-${generateRandomString(10)}`;
+      const randomAmountLimit = (generateRandomNumber(100, 1000) * 100).toString();
+      const expireDate = '12/30'; // MM/YY format
+      const randomRRN = generateRandomRRN();
+
+      const result = await MasterpassService.recurringOrderUpdate({
+        jToken: randomJToken,
+        accountKey: randomAccountKey,
+        cardAlias: randomCardAlias,
+        productId: randomProductId,
+        amountLimit: randomAmountLimit,
+        expireDate: expireDate,
+        rrn: randomRRN,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleRecurringOrderDelete = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const randomJToken = `jtoken-${generateRandomString(16)}-${Date.now()}`;
+      const randomAccountKey = `account-${generateRandomString(12)}`;
+      const randomCardAlias = `card-${generateRandomString(8)}`;
+      const randomProductId = `product-${generateRandomString(10)}`;
+      const authenticationMethod = 'SMS_OTP';
+      const randomRRN = generateRandomRRN();
+
+      const result = await MasterpassService.recurringOrderDelete({
+        jToken: randomJToken,
+        accountKey: randomAccountKey,
+        cardAlias: randomCardAlias,
+        productId: randomProductId,
+        authenticationMethod: authenticationMethod,
+        rrn: randomRRN,
+      });
+
+      setResponse(result);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleClear = useCallback(() => {
     setResponse(null);
     setError(null);
@@ -505,6 +814,76 @@ export const MasterpassTestScreen: React.FC = () => {
           <MasterpassButton
             title="Payment"
             onPress={handlePayment}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Direct Payment"
+            onPress={handleDirectPayment}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Register And Purchase"
+            onPress={handleRegisterAndPurchase}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="QR Payment"
+            onPress={handleQrPayment}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Money Send"
+            onPress={handleMoneySend}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Complete Registration"
+            onPress={handleCompleteRegistration}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Digital Loan"
+            onPress={handleDigitalLoan}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Start Loan Validation"
+            onPress={handleStartLoanValidation}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Recurring Order Register"
+            onPress={handleRecurringOrderRegister}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Recurring Order Update"
+            onPress={handleRecurringOrderUpdate}
+            loading={loading}
+            disabled={loading}
+          />
+
+          <MasterpassButton
+            title="Recurring Order Delete"
+            onPress={handleRecurringOrderDelete}
             loading={loading}
             disabled={loading}
           />

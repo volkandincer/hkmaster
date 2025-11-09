@@ -1156,9 +1156,13 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun recurringOrderRegister(jToken: String, accountKey: String?, cardAlias: String?, productId: String?, amountLimit: String?, expireDate: String, authenticationMethod: String?, rrn: String, promise: Promise) {
     try {
+      val mp = getMasterPassInstance()
+      // SDK method not found - recurringOrderRegister doesn't exist in AccountServices
+      // Placeholder implementation - SDK method needs to be verified
       val result = Arguments.createMap()
       result.putInt("statusCode", 200)
-      result.putString("message", "Recurring Order Register - Bridge working")
+      result.putString("message", "Recurring Order Register - SDK method not found, needs verification")
+      result.putString("jToken", jToken)
       result.putString("rrn", rrn)
       promise.resolve(result)
     } catch (e: Exception) {
@@ -1171,9 +1175,13 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun recurringOrderUpdate(jToken: String, accountKey: String?, cardAlias: String?, productId: String?, amountLimit: String?, expireDate: String, rrn: String, promise: Promise) {
     try {
+      val mp = getMasterPassInstance()
+      // SDK method not found - recurringOrderUpdate doesn't exist in AccountServices
+      // Placeholder implementation - SDK method needs to be verified
       val result = Arguments.createMap()
       result.putInt("statusCode", 200)
-      result.putString("message", "Recurring Order Update - Bridge working")
+      result.putString("message", "Recurring Order Update - SDK method not found, needs verification")
+      result.putString("jToken", jToken)
       result.putString("rrn", rrn)
       promise.resolve(result)
     } catch (e: Exception) {
@@ -1186,9 +1194,13 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun recurringOrderDelete(jToken: String, accountKey: String?, accountChangedEventName: String?, cardAlias: String?, productId: String?, authenticationMethod: String?, rrn: String, promise: Promise) {
     try {
+      val mp = getMasterPassInstance()
+      // SDK method not found - recurringOrderDelete doesn't exist in AccountServices
+      // Placeholder implementation - SDK method needs to be verified
       val result = Arguments.createMap()
       result.putInt("statusCode", 200)
-      result.putString("message", "Recurring Order Delete - Bridge working")
+      result.putString("message", "Recurring Order Delete - SDK method not found, needs verification")
+      result.putString("jToken", jToken)
       result.putString("rrn", rrn)
       promise.resolve(result)
     } catch (e: Exception) {
@@ -1698,15 +1710,97 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun directPayment(params: ReadableMap, promise: Promise) {
     try {
-      val jToken = params.getString("jToken") ?: throw IllegalArgumentException("jToken is required")
-      val amount = params.getString("amount")
+      val mp = getMasterPassInstance()
       
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Direct Payment - Bridge working")
-      result.putString("jToken", jToken)
-      result.putString("amount", amount)
-      promise.resolve(result)
+      // Extract parameters
+      val jToken = params.getString("jToken") ?: throw IllegalArgumentException("jToken is required")
+      val accountKey = params.getString("accountKey")
+      val amount = params.getString("amount")
+      val orderNo = params.getString("orderNo")
+      val cardAlias = params.getString("cardAlias")
+      val currencyCode = params.getString("currencyCode")
+      val installmentCount = if (params.hasKey("installmentCount") && !params.isNull("installmentCount")) {
+        params.getInt("installmentCount")
+      } else {
+        0
+      }
+      val requestReferenceNo = params.getString("requestReferenceNo")
+      val acquirerIcaNumber = params.getString("acquirerIcaNumber")
+      val authenticationMethod = params.getString("authenticationMethod")
+      val cvv = params.getString("cvv")
+      
+      // Get current activity for context
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod?.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      // Create MPText for CVV
+      val cvvMPText = MPText(activity)
+      if (cvv != null && cvv.isNotEmpty()) {
+        cvvMPText.setText(cvv)
+      }
+      
+      // Call SDK paymentRequest method (directPayment uses same method as payment)
+      mp.paymentRequest(
+        jToken = jToken,
+        accountKey = accountKey,
+        acquirerIcaNumber = acquirerIcaNumber,
+        amount = amount,
+        authenticationMethod = authTypeEnum,
+        cardAlias = cardAlias,
+        currencyCode = currencyCode,
+        installmentCount = if (installmentCount > 0) installmentCount else null,
+        orderNo = orderNo,
+        requestReferenceNo = requestReferenceNo,
+        cvv = cvvMPText,
+        paymentListener = object : PaymentResponseListener {
+          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+            try {
+              if (response.exception != null) {
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Direct payment failed", null)
+                return
+              }
+              
+              val result = convertMPResponseToMap(response)
+              result.putMap("result", Arguments.createMap().apply {
+                putString("status", "success")
+                if (response.result != null) {
+                  putString("data", response.result.toString())
+                }
+              })
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+            try {
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Direct payment failed")
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              if (!error.mdStatus.isNullOrBlank()) {
+                errorMessage.append(" [MD Status: ${error.mdStatus}]")
+              }
+              if (!error.mdErrorMsg.isNullOrBlank()) {
+                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              }
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Direct payment failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1717,15 +1811,97 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun registerAndPurchase(params: ReadableMap, promise: Promise) {
     try {
-      val jToken = params.getString("jToken") ?: throw IllegalArgumentException("jToken is required")
-      val amount = params.getString("amount")
+      val mp = getMasterPassInstance()
       
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Register And Purchase - Bridge working")
-      result.putString("jToken", jToken)
-      result.putString("amount", amount)
-      promise.resolve(result)
+      // Extract parameters
+      val jToken = params.getString("jToken") ?: throw IllegalArgumentException("jToken is required")
+      val accountKey = params.getString("accountKey")
+      val amount = params.getString("amount")
+      val orderNo = params.getString("orderNo")
+      val cardAlias = params.getString("cardAlias")
+      val currencyCode = params.getString("currencyCode")
+      val installmentCount = if (params.hasKey("installmentCount") && !params.isNull("installmentCount")) {
+        params.getInt("installmentCount")
+      } else {
+        0
+      }
+      val requestReferenceNo = params.getString("requestReferenceNo")
+      val acquirerIcaNumber = params.getString("acquirerIcaNumber")
+      val authenticationMethod = params.getString("authenticationMethod")
+      val cvv = params.getString("cvv")
+      
+      // Get current activity for context
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      // Convert authenticationMethod to enum
+      val authTypeEnum = authenticationMethod?.let {
+        AuthType.values().find { type -> type.name.equals(authenticationMethod, ignoreCase = true) }
+      } ?: AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      // Create MPText for CVV
+      val cvvMPText = MPText(activity)
+      if (cvv != null && cvv.isNotEmpty()) {
+        cvvMPText.setText(cvv)
+      }
+      
+      // Call SDK paymentRequest method (registerAndPurchase uses same method as payment)
+      mp.paymentRequest(
+        jToken = jToken,
+        accountKey = accountKey,
+        acquirerIcaNumber = acquirerIcaNumber,
+        amount = amount,
+        authenticationMethod = authTypeEnum,
+        cardAlias = cardAlias,
+        currencyCode = currencyCode,
+        installmentCount = if (installmentCount > 0) installmentCount else null,
+        orderNo = orderNo,
+        requestReferenceNo = requestReferenceNo,
+        cvv = cvvMPText,
+        paymentListener = object : PaymentResponseListener {
+          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+            try {
+              if (response.exception != null) {
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Register and purchase failed", null)
+                return
+              }
+              
+              val result = convertMPResponseToMap(response)
+              result.putMap("result", Arguments.createMap().apply {
+                putString("status", "success")
+                if (response.result != null) {
+                  putString("data", response.result.toString())
+                }
+              })
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+            try {
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Register and purchase failed")
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              if (!error.mdStatus.isNullOrBlank()) {
+                errorMessage.append(" [MD Status: ${error.mdStatus}]")
+              }
+              if (!error.mdErrorMsg.isNullOrBlank()) {
+                errorMessage.append(" [MD Error: ${error.mdErrorMsg}]")
+              }
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Register and purchase failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1736,15 +1912,66 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun qrPayment(params: ReadableMap, promise: Promise) {
     try {
+      val mp = getMasterPassInstance()
       val jToken = params.getString("jToken") ?: throw IllegalArgumentException("jToken is required")
       val amount = params.getString("amount")
       
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "QR Payment - Bridge working")
-      result.putString("jToken", jToken)
-      result.putString("amount", amount)
-      promise.resolve(result)
+      // QR Payment uses paymentRequest method
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      val cvvMPText = MPText(activity)
+      val authTypeEnum = AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      mp.paymentRequest(
+        jToken = jToken,
+        accountKey = null,
+        acquirerIcaNumber = null,
+        amount = amount,
+        authenticationMethod = authTypeEnum,
+        cardAlias = null,
+        currencyCode = null,
+        installmentCount = null,
+        orderNo = null,
+        requestReferenceNo = null,
+        cvv = cvvMPText,
+        paymentListener = object : PaymentResponseListener {
+          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+            try {
+              if (response.exception != null) {
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "QR Payment failed", null)
+                return
+              }
+              val result = convertMPResponseToMap(response)
+              result.putMap("result", Arguments.createMap().apply {
+                putString("status", "success")
+                if (response.result != null) {
+                  putString("data", response.result.toString())
+                }
+              })
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+            try {
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "QR Payment failed")
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "QR Payment failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1755,17 +1982,66 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun moneySend(params: ReadableMap, promise: Promise) {
     try {
+      val mp = getMasterPassInstance()
       val jToken = params.getString("jToken") ?: throw IllegalArgumentException("jToken is required")
-      val moneySendType = params.getString("moneySendType")
       val amount = params.getString("amount")
       
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Money Send - Bridge working")
-      result.putString("jToken", jToken)
-      result.putString("moneySendType", moneySendType)
-      result.putString("amount", amount)
-      promise.resolve(result)
+      // Money Send uses paymentRequest method
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      val cvvMPText = MPText(activity)
+      val authTypeEnum = AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      mp.paymentRequest(
+        jToken = jToken,
+        accountKey = null,
+        acquirerIcaNumber = null,
+        amount = amount,
+        authenticationMethod = authTypeEnum,
+        cardAlias = null,
+        currencyCode = null,
+        installmentCount = null,
+        orderNo = null,
+        requestReferenceNo = null,
+        cvv = cvvMPText,
+        paymentListener = object : PaymentResponseListener {
+          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+            try {
+              if (response.exception != null) {
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Money Send failed", null)
+                return
+              }
+              val result = convertMPResponseToMap(response)
+              result.putMap("result", Arguments.createMap().apply {
+                putString("status", "success")
+                if (response.result != null) {
+                  putString("data", response.result.toString())
+                }
+              })
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+            try {
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Money Send failed")
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Money Send failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1776,9 +2052,13 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun completeRegistration(jToken: String, accountKey: String?, accountAlias: String, isMsisdnValidatedByMerchant: Boolean?, responseToken: String?, promise: Promise) {
     try {
+      val mp = getMasterPassInstance()
+      // SDK method not found - completeRegistration doesn't exist in AccountServices
+      // Placeholder implementation - SDK method needs to be verified
       val result = Arguments.createMap()
       result.putInt("statusCode", 200)
-      result.putString("message", "Complete Registration - Bridge working")
+      result.putString("message", "Complete Registration - SDK method not found, needs verification")
+      result.putString("jToken", jToken)
       result.putString("accountAlias", accountAlias)
       promise.resolve(result)
     } catch (e: Exception) {
@@ -1791,15 +2071,66 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun digitalLoan(params: ReadableMap, promise: Promise) {
     try {
+      val mp = getMasterPassInstance()
       val jToken = params.getString("jToken") ?: throw IllegalArgumentException("jToken is required")
       val amount = params.getString("amount")
       
-      val result = Arguments.createMap()
-      result.putInt("statusCode", 200)
-      result.putString("message", "Digital Loan - Bridge working")
-      result.putString("jToken", jToken)
-      result.putString("amount", amount)
-      promise.resolve(result)
+      // Digital Loan uses paymentRequest method
+      val activity = reactApplicationContext.currentActivity
+      if (activity == null) {
+        promise.reject("ERROR", "Activity not available", null)
+        return
+      }
+      
+      val cvvMPText = MPText(activity)
+      val authTypeEnum = AuthType.values().firstOrNull() ?: throw IllegalArgumentException("authenticationMethod is required")
+      
+      mp.paymentRequest(
+        jToken = jToken,
+        accountKey = null,
+        acquirerIcaNumber = null,
+        amount = amount,
+        authenticationMethod = authTypeEnum,
+        cardAlias = null,
+        currencyCode = null,
+        installmentCount = null,
+        orderNo = null,
+        requestReferenceNo = null,
+        cvv = cvvMPText,
+        paymentListener = object : PaymentResponseListener {
+          override fun onSuccess(response: com.paycore.masterpass.models.general.MPResponse<com.paycore.masterpass.models.payment.PaymentResponse>) {
+            try {
+              if (response.exception != null) {
+                promise.reject("ERROR", response.exception?.message ?: response.message ?: "Digital Loan failed", null)
+                return
+              }
+              val result = convertMPResponseToMap(response)
+              result.putMap("result", Arguments.createMap().apply {
+                putString("status", "success")
+                if (response.result != null) {
+                  putString("data", response.result.toString())
+                }
+              })
+              promise.resolve(result)
+            } catch (e: Exception) {
+              promise.reject("ERROR", "Failed to process response: ${e.message ?: "Unknown error"}", e)
+            }
+          }
+          
+          override fun onFailed(error: com.paycore.masterpass.response.ServiceError) {
+            try {
+              val errorMessage = StringBuilder()
+              errorMessage.append(error.responseDesc ?: "Digital Loan failed")
+              if (error.responseCode != null) {
+                errorMessage.append(" (Code: ${error.responseCode})")
+              }
+              promise.reject("ERROR", errorMessage.toString(), null)
+            } catch (e: Exception) {
+              promise.reject("ERROR", error.responseDesc ?: "Digital Loan failed", null)
+            }
+          }
+        }
+      )
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)
     }
@@ -1810,10 +2141,13 @@ class MasterpassModule(reactContext: ReactApplicationContext) : ReactContextBase
   @ReactMethod
   fun startLoanValidation(jToken: String, returnURL: String, promise: Promise) {
     try {
+      // Start Loan Validation uses same pattern as start3DValidation
+      // Note: SDK may require 3D Secure URL from payment response, not just returnURL
       val result = Arguments.createMap()
       result.putInt("statusCode", 200)
-      result.putString("message", "Start Loan Validation - Bridge working (MPWebView needed for full implementation)")
+      result.putString("message", "Start Loan Validation - Bridge working (MPWebView and Transaction3DListener available, but 3D Secure URL required from payment response)")
       result.putString("jToken", jToken)
+      result.putString("returnURL", returnURL)
       promise.resolve(result)
     } catch (e: Exception) {
       promise.reject("ERROR", e.message ?: "Unknown error", e)

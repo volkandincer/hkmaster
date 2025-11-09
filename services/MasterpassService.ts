@@ -522,6 +522,406 @@ class MasterpassService {
       throw new Error(`Masterpass payment failed: ${errorMessage}`);
     }
   }
+
+  /**
+   * Direct Payment
+   */
+  async directPayment(params: {
+    jToken: string;
+    accountKey?: string;
+    cardAlias?: string;
+    amount?: string;
+    orderNo?: string;
+    rrn?: string;
+    cvv?: string;
+    currencyCode?: string;
+    paymentType?: string;
+    acquirerIcaNumber?: string;
+    installmentCount?: number;
+    authenticationMethod?: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      const response = await MasterpassModule.directPayment({
+        jToken: params.jToken,
+        accountKey: params.accountKey || null,
+        cardAlias: params.cardAlias || null,
+        amount: params.amount || null,
+        orderNo: params.orderNo || null,
+        rrn: params.rrn || null,
+        cvv: params.cvv || null,
+        currencyCode: params.currencyCode || null,
+        paymentType: params.paymentType || null,
+        acquirerIcaNumber: params.acquirerIcaNumber || null,
+        installmentCount: params.installmentCount || 0,
+        authenticationMethod: params.authenticationMethod || null,
+      });
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass directPayment failed: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Register And Purchase
+   */
+  async registerAndPurchase(params: {
+    jToken: string;
+    accountKey?: string;
+    cardAlias?: string;
+    amount?: string;
+    orderNo?: string;
+    rrn?: string;
+    cvv?: string;
+    currencyCode?: string;
+    paymentType?: string;
+    acquirerIcaNumber?: string;
+    installmentCount?: number;
+    authenticationMethod?: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      const response = await MasterpassModule.registerAndPurchase({
+        jToken: params.jToken,
+        accountKey: params.accountKey || null,
+        cardAlias: params.cardAlias || null,
+        amount: params.amount || null,
+        orderNo: params.orderNo || null,
+        rrn: params.rrn || null,
+        cvv: params.cvv || null,
+        currencyCode: params.currencyCode || null,
+        paymentType: params.paymentType || null,
+        acquirerIcaNumber: params.acquirerIcaNumber || null,
+        installmentCount: params.installmentCount || 0,
+        authenticationMethod: params.authenticationMethod || null,
+      });
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Masterpass registerAndPurchase failed: ${errorMessage}`,
+      );
+    }
+  }
+
+  /**
+   * QR Payment
+   */
+  async qrPayment(params: {
+    jToken: string;
+    amount?: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      const response = await MasterpassModule.qrPayment({
+        jToken: params.jToken,
+        amount: params.amount || null,
+      });
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass qrPayment failed: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Money Send
+   */
+  async moneySend(params: {
+    jToken: string;
+    moneySendType?: string;
+    amount?: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      const response = await MasterpassModule.moneySend({
+        jToken: params.jToken,
+        moneySendType: params.moneySendType || null,
+        amount: params.amount || null,
+      });
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass moneySend failed: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Complete Registration
+   */
+  async completeRegistration(params: {
+    jToken: string;
+    accountKey?: string;
+    accountAlias: string;
+    isMsisdnValidatedByMerchant?: boolean;
+    responseToken?: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+      if (!params.accountAlias || params.accountAlias.trim().length === 0) {
+        throw new Error('accountAlias is required');
+      }
+
+      const response = await MasterpassModule.completeRegistration(
+        params.jToken,
+        params.accountKey || null,
+        params.accountAlias,
+        params.isMsisdnValidatedByMerchant ?? false,
+        params.responseToken || null,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Masterpass completeRegistration failed: ${errorMessage}`,
+      );
+    }
+  }
+
+  /**
+   * Digital Loan
+   */
+  async digitalLoan(params: {
+    jToken: string;
+    amount?: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      const response = await MasterpassModule.digitalLoan({
+        jToken: params.jToken,
+        amount: params.amount || null,
+      });
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Masterpass digitalLoan failed: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Start Loan Validation
+   */
+  async startLoanValidation(
+    jToken: string,
+    returnURL?: string,
+  ): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!jToken || jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+
+      const response = await MasterpassModule.startLoanValidation(
+        jToken,
+        returnURL || '',
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Masterpass startLoanValidation failed: ${errorMessage}`,
+      );
+    }
+  }
+
+  /**
+   * Recurring Order Register
+   */
+  async recurringOrderRegister(params: {
+    jToken: string;
+    accountKey?: string;
+    cardAlias?: string;
+    productId?: string;
+    amountLimit?: string;
+    expireDate: string;
+    authenticationMethod?: string;
+    rrn: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+      if (!params.expireDate || params.expireDate.trim().length === 0) {
+        throw new Error('expireDate is required');
+      }
+      if (!params.rrn || params.rrn.trim().length === 0) {
+        throw new Error('rrn is required');
+      }
+
+      const response = await MasterpassModule.recurringOrderRegister(
+        params.jToken,
+        params.accountKey || null,
+        params.cardAlias || null,
+        params.productId || null,
+        params.amountLimit || null,
+        params.expireDate,
+        params.authenticationMethod || null,
+        params.rrn,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Masterpass recurringOrderRegister failed: ${errorMessage}`,
+      );
+    }
+  }
+
+  /**
+   * Recurring Order Update
+   */
+  async recurringOrderUpdate(params: {
+    jToken: string;
+    accountKey?: string;
+    cardAlias?: string;
+    productId?: string;
+    amountLimit?: string;
+    expireDate: string;
+    rrn: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+      if (!params.expireDate || params.expireDate.trim().length === 0) {
+        throw new Error('expireDate is required');
+      }
+      if (!params.rrn || params.rrn.trim().length === 0) {
+        throw new Error('rrn is required');
+      }
+
+      const response = await MasterpassModule.recurringOrderUpdate(
+        params.jToken,
+        params.accountKey || null,
+        params.cardAlias || null,
+        params.productId || null,
+        params.amountLimit || null,
+        params.expireDate,
+        params.rrn,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Masterpass recurringOrderUpdate failed: ${errorMessage}`,
+      );
+    }
+  }
+
+  /**
+   * Recurring Order Delete
+   */
+  async recurringOrderDelete(params: {
+    jToken: string;
+    accountKey?: string;
+    accountChangedEventName?: string;
+    cardAlias?: string;
+    productId?: string;
+    authenticationMethod?: string;
+    rrn: string;
+  }): Promise<MasterpassResponse> {
+    if (!MasterpassModule) {
+      throw new Error('MasterpassModule is not available');
+    }
+
+    try {
+      if (!params.jToken || params.jToken.trim().length === 0) {
+        throw new Error('jToken is required');
+      }
+      if (!params.rrn || params.rrn.trim().length === 0) {
+        throw new Error('rrn is required');
+      }
+
+      const response = await MasterpassModule.recurringOrderDelete(
+        params.jToken,
+        params.accountKey || null,
+        params.accountChangedEventName || null,
+        params.cardAlias || null,
+        params.productId || null,
+        params.authenticationMethod || null,
+        params.rrn,
+      );
+
+      return response as MasterpassResponse;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Masterpass recurringOrderDelete failed: ${errorMessage}`,
+      );
+    }
+  }
 }
 
 export default new MasterpassService();

@@ -869,19 +869,172 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Recurring Order Register
   
   @objc func recurringOrderRegister(_ jToken: String, accountKey: String?, cardAlias: String?, productId: String?, amountLimit: String?, expireDate: String, authenticationMethod: String?, rrn: String, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Recurring Order Register - Not implemented yet"])
+    // Convert authenticationMethod to AuthType enum
+    var authTypeEnum: AuthType? = nil
+    if let authMethod = authenticationMethod {
+      authTypeEnum = AuthType.allCases.first(where: { $0.rawValue.lowercased() == authMethod.lowercased() })
+    }
+    
+    // Call SDK recurringOrderRegister method with completion handler
+    // iOS SDK signature: recurringOrderRegister(_:accountKey:cardAlias:productId:amountLimit:expireDate:authenticationMethod:rrn:_:)
+    MasterPass.recurringOrderRegister(
+      jToken,
+      accountKey ?? "",
+      cardAlias ?? "",
+      productId ?? "",
+      amountLimit ?? "",
+      expireDate,
+      authTypeEnum,
+      rrn,
+      { (error: ServiceError?, result: MPResponse<GeneralResponse>?) in
+        if let error = error {
+          var errorMessage = error.responseDesc ?? "Recurring Order Register failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          if let exception = response.exception {
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          var responseDict: [String: Any] = [:]
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          responseDict["version"] = response.version ?? NSNull()
+          responseDict["correlationId"] = response.correlationId ?? NSNull()
+          responseDict["requestId"] = response.requestId ?? NSNull()
+          
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            resultDict["status"] = "success"
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Recurring Order Register failed: No response received", nil)
+        }
+      }
+    )
   }
   
   // MARK: - Recurring Order Update
   
   @objc func recurringOrderUpdate(_ jToken: String, accountKey: String?, cardAlias: String?, productId: String?, amountLimit: String?, expireDate: String, rrn: String, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Recurring Order Update - Not implemented yet"])
+    // Call SDK recurringOrderUpdate method with completion handler
+    // iOS SDK signature: recurringOrderUpdate(_:accountKey:cardAlias:productId:amountLimit:expireDate:rrn:_:)
+    MasterPass.recurringOrderUpdate(
+      jToken,
+      accountKey ?? "",
+      cardAlias ?? "",
+      productId ?? "",
+      amountLimit ?? "",
+      expireDate,
+      rrn,
+      { (error: ServiceError?, result: MPResponse<GeneralResponse>?) in
+        if let error = error {
+          var errorMessage = error.responseDesc ?? "Recurring Order Update failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          if let exception = response.exception {
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          var responseDict: [String: Any] = [:]
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          responseDict["version"] = response.version ?? NSNull()
+          responseDict["correlationId"] = response.correlationId ?? NSNull()
+          responseDict["requestId"] = response.requestId ?? NSNull()
+          
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            resultDict["status"] = "success"
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Recurring Order Update failed: No response received", nil)
+        }
+      }
+    )
   }
   
   // MARK: - Recurring Order Delete
   
   @objc func recurringOrderDelete(_ jToken: String, accountKey: String?, accountChangedEventName: String?, cardAlias: String?, productId: String?, authenticationMethod: String?, rrn: String, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Recurring Order Delete - Not implemented yet"])
+    // Convert accountChangedEventName to AccountChangeKind enum
+    var accountChangeKindEnum: AccountChangeKind? = nil
+    if let eventName = accountChangedEventName, !eventName.isEmpty {
+      // Try to find matching AccountChangeKind enum value
+      // If not found, use nil (optional parameter)
+      accountChangeKindEnum = AccountChangeKind.allCases.first(where: { $0.rawValue.lowercased() == eventName.lowercased() })
+    }
+    
+    // Convert authenticationMethod to AuthType enum
+    var authTypeEnum: AuthType? = nil
+    if let authMethod = authenticationMethod {
+      authTypeEnum = AuthType.allCases.first(where: { $0.rawValue.lowercased() == authMethod.lowercased() })
+    }
+    
+    // Call SDK recurringOrderDelete method with completion handler
+    // iOS SDK signature: recurringOrderDelete(_:accountKey:accountChangedEventName:cardAlias:productId:authenticationMethod:rrn:_:)
+    MasterPass.recurringOrderDelete(
+      jToken,
+      accountKey ?? "",
+      accountChangeKindEnum,
+      cardAlias ?? "",
+      productId ?? "",
+      authTypeEnum,
+      rrn,
+      { (error: ServiceError?, result: MPResponse<RecurringOrderDeleteResponse>?) in
+        if let error = error {
+          var errorMessage = error.responseDesc ?? "Recurring Order Delete failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          if let exception = response.exception {
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          var responseDict: [String: Any] = [:]
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          responseDict["version"] = response.version ?? NSNull()
+          responseDict["correlationId"] = response.correlationId ?? NSNull()
+          responseDict["requestId"] = response.requestId ?? NSNull()
+          
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            resultDict["status"] = "success"
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Recurring Order Delete failed: No response received", nil)
+        }
+      }
+    )
   }
   
   // MARK: - Verify
@@ -1321,42 +1474,565 @@ class RCTMasterpassModule: RCTEventEmitter {
   // MARK: - Direct Payment
   
   @objc func directPayment(_ params: NSDictionary, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Direct Payment - Not implemented yet"])
+    // Extract parameters (same as payment)
+    guard let jToken = params["jToken"] as? String else {
+      rejecter("ERROR", "jToken is required", nil)
+      return
+    }
+    
+    let accountKey = params["accountKey"] as? String
+    let cardAlias = params["cardAlias"] as? String
+    let amount = params["amount"] as? String
+    let orderNo = params["orderNo"] as? String
+    let rrn = params["rrn"] as? String
+    let cvv = params["cvv"] as? String
+    let currencyCodeStr = params["currencyCode"] as? String
+    let paymentTypeStr = params["paymentType"] as? String
+    let authenticationMethod = params["authenticationMethod"] as? String
+    let acquirerIcaNumber = params["acquirerIcaNumber"] as? String
+    let installmentCount = params["installmentCount"] as? Int ?? 0
+    
+    // Convert enums
+    var currencyCodeEnum: MPCurrencyCode = .TRY
+    if let currencyCode = currencyCodeStr, let found = MPCurrencyCode.allCases.first(where: { $0.rawValue.lowercased() == currencyCode.lowercased() }) {
+      currencyCodeEnum = found
+    }
+    
+    var paymentTypeEnum: PaymentType = PaymentType.allCases.first ?? PaymentType.allCases[0]
+    if let paymentType = paymentTypeStr, let found = PaymentType.allCases.first(where: { $0.rawValue.lowercased() == paymentType.lowercased() }) {
+      paymentTypeEnum = found
+    }
+    
+    var authTypeEnum: AuthType = AuthType.allCases.first ?? AuthType.allCases[0]
+    if let authMethod = authenticationMethod, let found = AuthType.allCases.first(where: { $0.rawValue.lowercased() == authMethod.lowercased() }) {
+      authTypeEnum = found
+    }
+    
+    // Completion handler
+    let completionHandler: (ServiceError?, MPResponse<PaymentResponse>?) -> Void = { (error: ServiceError?, response: MPResponse<PaymentResponse>?) in
+      if let error = error {
+        var errorMessage = error.responseDesc ?? "Direct payment failed"
+        if let responseCode = error.responseCode {
+          errorMessage += " (Code: \(responseCode))"
+        }
+        rejecter("ERROR", errorMessage, nil)
+      } else if let response = response {
+        if let exception = response.exception {
+          rejecter("ERROR", exception.message, nil)
+          return
+        }
+        
+        var responseDict: [String: Any] = [:]
+        responseDict["statusCode"] = response.statusCode
+        responseDict["message"] = response.message
+        responseDict["buildId"] = response.buildId
+        responseDict["version"] = response.version ?? NSNull()
+        responseDict["correlationId"] = response.correlationId ?? NSNull()
+        responseDict["requestId"] = response.requestId ?? NSNull()
+        
+        if let resultObj = response.result {
+          var resultDict: [String: Any] = [:]
+          resultDict["status"] = "success"
+          responseDict["result"] = resultDict
+        } else {
+          responseDict["result"] = NSNull()
+        }
+        
+        resolver(responseDict)
+      } else {
+        rejecter("ERROR", "Direct payment failed: No response received", nil)
+      }
+    }
+    
+    // Create MPText for CVV on main thread
+    let workItem = DispatchWorkItem {
+      let cvvMPText = MPText()
+      cvvMPText.type = .cvv
+      cvvMPText.text = cvv ?? ""
+      
+      // Call SDK payment method (directPayment uses same method as payment)
+      MasterPass.payment(
+        jToken,
+        rrn,
+        cvvMPText,
+        cardAlias,
+        accountKey,
+        amount,
+        orderNo,
+        currencyCodeEnum,
+        paymentTypeEnum,
+        acquirerIcaNumber,
+        installmentCount > 0 ? installmentCount : nil,
+        nil, // subMerchant
+        nil, // rewardList
+        nil, // orderDetails
+        authTypeEnum,
+        nil, // orderProductDetails
+        nil, // buyerDetails
+        nil, // billDetails
+        nil, // deliveryDetails
+        nil, // otherDetails
+        nil, // secure3DModel
+        nil, // terminal
+        nil, // mokaSubDealerDetails
+        nil, // customParameters
+        nil, // additionalParams
+        completionHandler
+      )
+    }
+    DispatchQueue.main.async(execute: workItem)
   }
   
   // MARK: - Register And Purchase
   
   @objc func registerAndPurchase(_ params: NSDictionary, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Register And Purchase - Not implemented yet"])
+    // Extract parameters (same as payment)
+    guard let jToken = params["jToken"] as? String else {
+      rejecter("ERROR", "jToken is required", nil)
+      return
+    }
+    
+    let accountKey = params["accountKey"] as? String
+    let cardAlias = params["cardAlias"] as? String
+    let amount = params["amount"] as? String
+    let orderNo = params["orderNo"] as? String
+    let rrn = params["rrn"] as? String
+    let cvv = params["cvv"] as? String
+    let currencyCodeStr = params["currencyCode"] as? String
+    let paymentTypeStr = params["paymentType"] as? String
+    let authenticationMethod = params["authenticationMethod"] as? String
+    let acquirerIcaNumber = params["acquirerIcaNumber"] as? String
+    let installmentCount = params["installmentCount"] as? Int ?? 0
+    
+    // Convert enums
+    var currencyCodeEnum: MPCurrencyCode = .TRY
+    if let currencyCode = currencyCodeStr, let found = MPCurrencyCode.allCases.first(where: { $0.rawValue.lowercased() == currencyCode.lowercased() }) {
+      currencyCodeEnum = found
+    }
+    
+    var paymentTypeEnum: PaymentType = PaymentType.allCases.first ?? PaymentType.allCases[0]
+    if let paymentType = paymentTypeStr, let found = PaymentType.allCases.first(where: { $0.rawValue.lowercased() == paymentType.lowercased() }) {
+      paymentTypeEnum = found
+    }
+    
+    var authTypeEnum: AuthType = AuthType.allCases.first ?? AuthType.allCases[0]
+    if let authMethod = authenticationMethod, let found = AuthType.allCases.first(where: { $0.rawValue.lowercased() == authMethod.lowercased() }) {
+      authTypeEnum = found
+    }
+    
+    // Completion handler
+    let completionHandler: (ServiceError?, MPResponse<PaymentResponse>?) -> Void = { (error: ServiceError?, response: MPResponse<PaymentResponse>?) in
+      if let error = error {
+        var errorMessage = error.responseDesc ?? "Register and purchase failed"
+        if let responseCode = error.responseCode {
+          errorMessage += " (Code: \(responseCode))"
+        }
+        rejecter("ERROR", errorMessage, nil)
+      } else if let response = response {
+        if let exception = response.exception {
+          rejecter("ERROR", exception.message, nil)
+          return
+        }
+        
+        var responseDict: [String: Any] = [:]
+        responseDict["statusCode"] = response.statusCode
+        responseDict["message"] = response.message
+        responseDict["buildId"] = response.buildId
+        responseDict["version"] = response.version ?? NSNull()
+        responseDict["correlationId"] = response.correlationId ?? NSNull()
+        responseDict["requestId"] = response.requestId ?? NSNull()
+        
+        if let resultObj = response.result {
+          var resultDict: [String: Any] = [:]
+          resultDict["status"] = "success"
+          responseDict["result"] = resultDict
+        } else {
+          responseDict["result"] = NSNull()
+        }
+        
+        resolver(responseDict)
+      } else {
+        rejecter("ERROR", "Register and purchase failed: No response received", nil)
+      }
+    }
+    
+    // Create MPText for CVV on main thread
+    let workItem = DispatchWorkItem {
+      let cvvMPText = MPText()
+      cvvMPText.type = .cvv
+      cvvMPText.text = cvv ?? ""
+      
+      // Call SDK payment method (registerAndPurchase uses same method as payment)
+      MasterPass.payment(
+        jToken,
+        rrn,
+        cvvMPText,
+        cardAlias,
+        accountKey,
+        amount,
+        orderNo,
+        currencyCodeEnum,
+        paymentTypeEnum,
+        acquirerIcaNumber,
+        installmentCount > 0 ? installmentCount : nil,
+        nil, // subMerchant
+        nil, // rewardList
+        nil, // orderDetails
+        authTypeEnum,
+        nil, // orderProductDetails
+        nil, // buyerDetails
+        nil, // billDetails
+        nil, // deliveryDetails
+        nil, // otherDetails
+        nil, // secure3DModel
+        nil, // terminal
+        nil, // mokaSubDealerDetails
+        nil, // customParameters
+        nil, // additionalParams
+        completionHandler
+      )
+    }
+    DispatchQueue.main.async(execute: workItem)
   }
   
   // MARK: - QR Payment
   
   @objc func qrPayment(_ params: NSDictionary, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "QR Payment - Not implemented yet"])
+    guard let jToken = params["jToken"] as? String else {
+      rejecter("ERROR", "jToken is required", nil)
+      return
+    }
+    
+    let amount = params["amount"] as? String
+    
+    // QR Payment uses payment method
+    let completionHandler: (ServiceError?, MPResponse<PaymentResponse>?) -> Void = { (error: ServiceError?, response: MPResponse<PaymentResponse>?) in
+      if let error = error {
+        var errorMessage = error.responseDesc ?? "QR Payment failed"
+        if let responseCode = error.responseCode {
+          errorMessage += " (Code: \(responseCode))"
+        }
+        rejecter("ERROR", errorMessage, nil)
+      } else if let response = response {
+        if let exception = response.exception {
+          rejecter("ERROR", exception.message, nil)
+          return
+        }
+        
+        var responseDict: [String: Any] = [:]
+        responseDict["statusCode"] = response.statusCode
+        responseDict["message"] = response.message
+        responseDict["buildId"] = response.buildId
+        responseDict["version"] = response.version ?? NSNull()
+        responseDict["correlationId"] = response.correlationId ?? NSNull()
+        responseDict["requestId"] = response.requestId ?? NSNull()
+        
+        if let resultObj = response.result {
+          var resultDict: [String: Any] = [:]
+          resultDict["status"] = "success"
+          responseDict["result"] = resultDict
+        } else {
+          responseDict["result"] = NSNull()
+        }
+        
+        resolver(responseDict)
+      } else {
+        rejecter("ERROR", "QR Payment failed: No response received", nil)
+      }
+    }
+    
+    let workItem = DispatchWorkItem {
+      let cvvMPText = MPText()
+      cvvMPText.type = .cvv
+      
+      MasterPass.payment(
+        jToken,
+        nil, // rrn
+        cvvMPText,
+        nil, // cardAlias
+        nil, // accountKey
+        amount,
+        nil, // orderNo
+        nil, // currencyCode
+        nil, // paymentType
+        nil, // acquirerIcaNumber
+        nil, // installmentCount
+        nil, // subMerchant
+        nil, // rewardList
+        nil, // orderDetails
+        nil, // authenticationMethod
+        nil, // orderProductDetails
+        nil, // buyerDetails
+        nil, // billDetails
+        nil, // deliveryDetails
+        nil, // otherDetails
+        nil, // secure3DModel
+        nil, // terminal
+        nil, // mokaSubDealerDetails
+        nil, // customParameters
+        nil, // additionalParams
+        completionHandler
+      )
+    }
+    DispatchQueue.main.async(execute: workItem)
   }
   
   // MARK: - Money Send
   
   @objc func moneySend(_ params: NSDictionary, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Money Send - Not implemented yet"])
+    guard let jToken = params["jToken"] as? String else {
+      rejecter("ERROR", "jToken is required", nil)
+      return
+    }
+    
+    let amount = params["amount"] as? String
+    
+    // Money Send uses payment method
+    let completionHandler: (ServiceError?, MPResponse<PaymentResponse>?) -> Void = { (error: ServiceError?, response: MPResponse<PaymentResponse>?) in
+      if let error = error {
+        var errorMessage = error.responseDesc ?? "Money Send failed"
+        if let responseCode = error.responseCode {
+          errorMessage += " (Code: \(responseCode))"
+        }
+        rejecter("ERROR", errorMessage, nil)
+      } else if let response = response {
+        if let exception = response.exception {
+          rejecter("ERROR", exception.message, nil)
+          return
+        }
+        
+        var responseDict: [String: Any] = [:]
+        responseDict["statusCode"] = response.statusCode
+        responseDict["message"] = response.message
+        responseDict["buildId"] = response.buildId
+        responseDict["version"] = response.version ?? NSNull()
+        responseDict["correlationId"] = response.correlationId ?? NSNull()
+        responseDict["requestId"] = response.requestId ?? NSNull()
+        
+        if let resultObj = response.result {
+          var resultDict: [String: Any] = [:]
+          resultDict["status"] = "success"
+          responseDict["result"] = resultDict
+        } else {
+          responseDict["result"] = NSNull()
+        }
+        
+        resolver(responseDict)
+      } else {
+        rejecter("ERROR", "Money Send failed: No response received", nil)
+      }
+    }
+    
+    let workItem = DispatchWorkItem {
+      let cvvMPText = MPText()
+      cvvMPText.type = .cvv
+      
+      MasterPass.payment(
+        jToken,
+        nil, // rrn
+        cvvMPText,
+        nil, // cardAlias
+        nil, // accountKey
+        amount,
+        nil, // orderNo
+        nil, // currencyCode
+        nil, // paymentType
+        nil, // acquirerIcaNumber
+        nil, // installmentCount
+        nil, // subMerchant
+        nil, // rewardList
+        nil, // orderDetails
+        nil, // authenticationMethod
+        nil, // orderProductDetails
+        nil, // buyerDetails
+        nil, // billDetails
+        nil, // deliveryDetails
+        nil, // otherDetails
+        nil, // secure3DModel
+        nil, // terminal
+        nil, // mokaSubDealerDetails
+        nil, // customParameters
+        nil, // additionalParams
+        completionHandler
+      )
+    }
+    DispatchQueue.main.async(execute: workItem)
   }
   
   // MARK: - Complete Registration
   
   @objc func completeRegistration(_ jToken: String, accountKey: String?, accountAlias: String, isMsisdnValidatedByMerchant: NSNumber?, responseToken: String?, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Complete Registration - Not implemented yet"])
+    // Call SDK completeRegistration method with completion handler
+    // iOS SDK signature: completeRegistration(_:accountKey:accountAlias:isMsisdnValidatedByMerchant:responseToken:_:)
+    MasterPass.completeRegistration(
+      jToken,
+      accountKey ?? "",
+      accountAlias,
+      isMsisdnValidatedByMerchant?.boolValue ?? false,
+      responseToken ?? "",
+      { (error: ServiceError?, result: MPResponse<GeneralResponse>?) in
+        if let error = error {
+          var errorMessage = error.responseDesc ?? "Complete Registration failed"
+          if let responseCode = error.responseCode {
+            errorMessage += " (Code: \(responseCode))"
+          }
+          rejecter("ERROR", errorMessage, nil)
+        } else if let response = result {
+          if let exception = response.exception {
+            rejecter("ERROR", exception.message, nil)
+            return
+          }
+          
+          var responseDict: [String: Any] = [:]
+          responseDict["statusCode"] = response.statusCode
+          responseDict["message"] = response.message
+          responseDict["buildId"] = response.buildId
+          responseDict["version"] = response.version ?? NSNull()
+          responseDict["correlationId"] = response.correlationId ?? NSNull()
+          responseDict["requestId"] = response.requestId ?? NSNull()
+          
+          if let resultObj = response.result {
+            var resultDict: [String: Any] = [:]
+            resultDict["status"] = "success"
+            responseDict["result"] = resultDict
+          } else {
+            responseDict["result"] = NSNull()
+          }
+          
+          resolver(responseDict)
+        } else {
+          rejecter("ERROR", "Complete Registration failed: No response received", nil)
+        }
+      }
+    )
   }
   
   // MARK: - Digital Loan
   
   @objc func digitalLoan(_ params: NSDictionary, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Digital Loan - Not implemented yet"])
+    guard let jToken = params["jToken"] as? String else {
+      rejecter("ERROR", "jToken is required", nil)
+      return
+    }
+    
+    let amount = params["amount"] as? String
+    
+    // Digital Loan uses payment method
+    let completionHandler: (ServiceError?, MPResponse<PaymentResponse>?) -> Void = { (error: ServiceError?, response: MPResponse<PaymentResponse>?) in
+      if let error = error {
+        var errorMessage = error.responseDesc ?? "Digital Loan failed"
+        if let responseCode = error.responseCode {
+          errorMessage += " (Code: \(responseCode))"
+        }
+        rejecter("ERROR", errorMessage, nil)
+      } else if let response = response {
+        if let exception = response.exception {
+          rejecter("ERROR", exception.message, nil)
+          return
+        }
+        
+        var responseDict: [String: Any] = [:]
+        responseDict["statusCode"] = response.statusCode
+        responseDict["message"] = response.message
+        responseDict["buildId"] = response.buildId
+        responseDict["version"] = response.version ?? NSNull()
+        responseDict["correlationId"] = response.correlationId ?? NSNull()
+        responseDict["requestId"] = response.requestId ?? NSNull()
+        
+        if let resultObj = response.result {
+          var resultDict: [String: Any] = [:]
+          resultDict["status"] = "success"
+          responseDict["result"] = resultDict
+        } else {
+          responseDict["result"] = NSNull()
+        }
+        
+        resolver(responseDict)
+      } else {
+        rejecter("ERROR", "Digital Loan failed: No response received", nil)
+      }
+    }
+    
+    let workItem = DispatchWorkItem {
+      let cvvMPText = MPText()
+      cvvMPText.type = .cvv
+      
+      MasterPass.payment(
+        jToken,
+        nil, // rrn
+        cvvMPText,
+        nil, // cardAlias
+        nil, // accountKey
+        amount,
+        nil, // orderNo
+        nil, // currencyCode
+        nil, // paymentType
+        nil, // acquirerIcaNumber
+        nil, // installmentCount
+        nil, // subMerchant
+        nil, // rewardList
+        nil, // orderDetails
+        nil, // authenticationMethod
+        nil, // orderProductDetails
+        nil, // buyerDetails
+        nil, // billDetails
+        nil, // deliveryDetails
+        nil, // otherDetails
+        nil, // secure3DModel
+        nil, // terminal
+        nil, // mokaSubDealerDetails
+        nil, // customParameters
+        nil, // additionalParams
+        completionHandler
+      )
+    }
+    DispatchQueue.main.async(execute: workItem)
   }
   
   // MARK: - Start Loan Validation
   
   @objc func startLoanValidation(_ jToken: String, returnURL: String, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-    resolver(["statusCode": 200, "message": "Start Loan Validation - Not implemented yet"])
+    // Validate returnURL
+    guard !returnURL.isEmpty else {
+      rejecter("ERROR", "returnURL is required for Loan Validation", nil)
+      return
+    }
+    
+    guard URL(string: returnURL) != nil else {
+      rejecter("ERROR", "Invalid returnURL format", nil)
+      return
+    }
+    
+    // Start Loan Validation uses start3DValidation pattern (similar to start3DValidation)
+    let workItem = DispatchWorkItem {
+      let webView = MPWebView()
+      
+      MasterPass.start3DValidation(
+        jToken,
+        returnURL: returnURL,
+        webView: webView,
+        { (result: Result<Status3D?, MPError>) in
+          switch result {
+          case .success(let status3D):
+            var responseDict: [String: Any] = [:]
+            responseDict["statusCode"] = 200
+            responseDict["message"] = "Loan Validation started successfully"
+            if let status = status3D {
+              // Status3D doesn't have rawValue, convert to String directly
+              responseDict["status3D"] = String(describing: status)
+            }
+            resolver(responseDict)
+          case .failure(let error):
+            var errorMessage = "Start Loan Validation failed"
+            let errorDesc = error.localizedDescription
+            if !errorDesc.isEmpty {
+              errorMessage = errorDesc
+            }
+            rejecter("ERROR", errorMessage, nil)
+          }
+        }
+      )
+    }
+    DispatchQueue.main.async(execute: workItem)
   }
 }
